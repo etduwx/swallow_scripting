@@ -12,8 +12,6 @@ match = "#define STAGES_OF_PIPELINE"
 
 outputfile = "output2.txt"
 
-
-rolling
 def editFile(x):
 
 	editingFile = open(filename,"r")
