@@ -1,0 +1,2 @@
+#! /bin/bash
+swallow-mcsc.py Swallow-nOS-main.xc  Swallow-helpers.xc swallow_comms.S Swallow-nOS_asm.s Swallow-nOS_client.xc Swallow-nOS_initialFunctions.c Swallow-nOS.xc Swallow-sobel-slect.c Swallow-sobel.xc -o swallow-nos.sgb

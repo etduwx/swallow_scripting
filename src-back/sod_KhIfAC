@@ -1,0 +1,8 @@
+    .section .dp.data,"adw", @progbits
+    .align 4
+    .globl  __sodFlag, "ui"
+__sodFlag:
+    .word   0
+    .globl  __sodEnd, "ui"
+__sodEnd:
+    .word   0x80000102
