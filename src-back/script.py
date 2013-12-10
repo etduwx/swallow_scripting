@@ -84,8 +84,12 @@ def editPrimBody(typeOfEditing):
 def editPrimHeader(coreList,measurePower):
 	numChildren = len(coreList)
 
-	match_x = "DIV_DEGREE_SWALLOW_X"
-	match_y = "DIV_DEGREE_SWALLOW_Y"
+	match_x = "DIV_DEGREE_SWALLOW_X "
+	match_y = "DIV_DEGREE_SWALLOW_Y "
+	match_children = "#define NUM_CHILDREN_SWALLOW "
+
+	print numChildren
+	print coreList
 
 	if(numChildren==4):
 		div_x = 2
@@ -111,9 +115,11 @@ def editPrimHeader(coreList,measurePower):
 	newFile = open(abs_path,'w')
 	for line in baseFile:
 		if match_x in line:
-			newFile.write("#define DIV_DEG_SWALLOW_X " + str(div_x) + "\n")
+			newFile.write(match_x+ str(div_x) + "\n")
 		elif match_y in line:
-			newFile.write("#define DIV_DEG_SWALLOW_Y " + str(div_y) + "\n")
+			newFile.write(match_y + str(div_y) + "\n")
+		elif match_children in line:
+			newFile.write(match_children + str(numChildren) + "\n")
 		else:
 			newFile.write(line)
 
@@ -253,16 +259,16 @@ def runExperiments(appList,coreNums):
 				values = []
 				coreList = []
 				if any("prim" in s for s in appList):
-					coreList.append(str(range(4,4+coreNums[appList.index("prim")])))
+					coreList.append(range(4,4+coreNums[appList.index("prim")]))
 					apps.append("prim")
 				if any("blur" in s for s in appList):
-					coreList.append(str(range(4+indices[appinds[0]],4+indices[appinds[0]]+coreNums[appList.index("blur")])))
+					coreList.append(range(4+indices[appinds[0]],4+indices[appinds[0]]+coreNums[appList.index("blur")]))
 					apps.append("blur")
 				if any("sobel" in s for s in appList):
-					coreList.append(str(range(4+indices[appinds[1]],4+indices[appinds[1]]+coreNums[appList.index("sobel")])))
+					coreList.append(range(4+indices[appinds[1]],4+indices[appinds[1]]+coreNums[appList.index("sobel")]))
 					apps.append("sobel")
 				if any("mergesort" in s for s in appList):
-					coreList.append(str(range(4+indices[appinds[2]],4+indices[appinds[2]]+coreNums[appList.index("mergesort")])))
+					coreList.append(range(4+indices[appinds[2]],4+indices[appinds[2]]+coreNums[appList.index("mergesort")]))
 					apps.append("mergesort")
 				for coreAppIndex in xrange(len(appList)):
 					i = 0
@@ -295,8 +301,10 @@ def runExperiments(appList,coreNums):
 						#compileandRun()
 						#parseOutput(i,coreAppIndex)
 						i += 1
-
-				#print_to_csv(apps,coreList,values)
+				abc = []		
+				for z in xrange(len(coreList)):
+					abc.append(str(coreList[z]))
+				#print_to_csv(apps,abc,values)
 
 
 #	if any("prim" in s for s in appList):
