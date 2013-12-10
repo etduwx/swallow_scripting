@@ -1,10 +1,8 @@
 #!/bin/sh 
-import os, tftpy, subprocess, signal
+import os, subprocess, signal, shutil
 from time import sleep
-from subprocess import Popen, PIPE
 from tempfile import mkstemp
-from shutil import move
-from os import remove, close
+
 
 filename = "blur.h"
 filename_xc = "blur.xc"
@@ -57,28 +55,30 @@ def editFile(x):
 def getReplacementsPrims(typeofEditing):
 		return {
 			'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
-			'ratio' : {'//if(rank==0) printMany':'if(rank==0) printMany','//printer[0] = 1000*','printer[0] = 1000*'},
-			'time'  : {'//if(rank==0) printMany':'if(rank==0) printMany','//printer[0] = printer[1]','printer[0] = printer[1]'}
+			'ratio' : {'//if(rank==0) printMany':'if(rank==0) printMany','//printer[0] = 1000*':'printer[0] = 1000*'},
+			'time'  : {'//if(rank==0) printMany':'if(rank==0) printMany','//printer[0] = printer[1]':'printer[0] = printer[1]'}
 			}.get(typeofEditing,{'//control_channel':'control_channel', '//printMany(8':'printMany(8'})
 
 def editPrimBody(typeOfEditing):
-	if (typeofEditing != "none"):
-		replacements = getReplacementsPrims(typeofEditing)
+	global PRIMS_BODY_PATH
+	global PRIMS_BODY_BASE_PATH
+	if (typeOfEditing != "none"):
+		replacements = getReplacementsPrims(typeOfEditing)
 		
 		fh, abs_path = mkstemp()
 		newFile = open(abs_path,'w')
-		editFile = open(PRIMS_BODY_BASEPATH)
+		editFile = open(PRIMS_BODY_BASE_PATH)
 		for line in editFile:
 			for src,target in replacements.iteritems():
 				line = (line.replace(src,target))
-			new_file.write(line)
+			newFile.write(line)
 		newFile.close()
-		close(fh)
+		os.close(fh)
 		editFile.close()
-		remove(PRIMS_BODY_PATH)
-		move(abs_path,PRIMS_BODY_PATH)
+		os.remove(PRIMS_BODY_PATH)
+		shutil.move(abs_path,PRIMS_BODY_PATH)
 	else:
-		remove(PRIMS_BODY_PATH)
+		os.remove(PRIMS_BODY_PATH)
 		copyfile(PRIMS_BODY_BASE_PATH,PRIMS_BODY_PATH)
 
 def editPrimHeader(coreList,measurePower):
@@ -106,10 +106,10 @@ def editPrimHeader(coreList,measurePower):
 		div_x=4
 		div_y=4
 
-	basefile = open(PRIMS_HEADER_BASE_PATH)
+	baseFile = open(PRIMS_HEADER_BASE_PATH)
 	fh, abs_path = mkstemp()
 	newFile = open(abs_path,'w')
-	for line in basefile:
+	for line in baseFile:
 		if match_x in line:
 			newFile.write("#define DIV_DEG_SWALLOW_X" + str(div_x))
 		elif match_y in line:
@@ -118,10 +118,10 @@ def editPrimHeader(coreList,measurePower):
 			newFile.write(line)
 
 	newFile.close()
-	close(fh)
+	os.close(fh)
 	baseFile.close()
-	remove(PRIMS_HEADER_PATH)
-	move(abs_path,PRIMS_HEADER_PATH)
+	os.remove(PRIMS_HEADER_PATH)
+	shutil.move(abs_path,PRIMS_HEADER_PATH)
 
 def print_to_csv(appList,coreList,values):
 	f = open(outputfile,"a+")
@@ -166,6 +166,8 @@ def print_to_csv(appList,coreList,values):
 
 # Need to add power or not power functionality
 def editMCMain(appToAdd,measurePower):
+	global MCMAIN_BASE_PATH
+	global MCMAIN_PATH
 	match = "par (int i = " + str(PARENTCORE_ID) 
 	fh, abs_path = mkstemp()
 	newFile = open(abs_path,'w')
@@ -184,12 +186,12 @@ def editMCMain(appToAdd,measurePower):
 		else:
 			newFile.write(line)
 
-	close(fh)
+	os.close(fh)
 	newFile.close()
 	baseFile.close()
 
-	remove(MCMAIN_PATH)
-	move(abs_path,MCMAIN_PATH)
+	os.remove(MCMAIN_PATH)
+	shutil.move(abs_path,MCMAIN_PATH)
 
 	MCMAIN_BASE_PATH = "mcmain_prim.xc"
 
@@ -204,7 +206,7 @@ def addPrim(coreList, measurementType):
 
 def runExperiments(appList,coreNums):
 	
-	indices = [0] * len(appList)
+	indices = [0] * 3
 	states = ["none","none","none","none"]
 	appinds = [0] * 3
 	upperBound = 3 + sum(coreNums)
@@ -251,7 +253,7 @@ def runExperiments(appList,coreNums):
 				values = []
 				coreList = []
 				if any("prim" in s for s in appList):
-					coreList.append(str(range(4,4+coreNums)))
+					coreList.append(str(range(4,4+coreNums[appList.index("prim")])))
 					apps.append("prim")
 				if any("blur" in s for s in appList):
 					coreList.append(str(range(4+indices[appinds[0]],4+indices[appinds[0]]+coreNums[appList.index("blur")])))
@@ -260,14 +262,14 @@ def runExperiments(appList,coreNums):
 					coreList.append(str(range(4+indices[appinds[1]],4+indices[appinds[1]]+coreNums[appList.index("sobel")])))
 					apps.append("sobel")
 				if any("mergesort" in s for s in appList):
-					coreList.append(str(range(4+indices[appinds[2]]4+indices[appinds[2]]+coreNums[appList.index("mergesort")])))
+					coreList.append(str(range(4+indices[appinds[2]],4+indices[appinds[2]]+coreNums[appList.index("mergesort")])))
 					apps.append("mergesort")
 				for coreAppIndex in xrange(len(appList)):
 					i = 0
 					while(i<4):
-
+						global MCMAIN_BASE_PATH
 						MCMAIN_BASE_PATH = "mcmain_prim_base.xc"
-						if (states[coreAppIndex] == "none" :
+						if states[coreAppIndex] == "none" :
 							if coreAppIndex == 0:
 								states[coreAppIndex] = "power"
 							else:
@@ -301,6 +303,8 @@ def runExperiments(appList,coreNums):
 #		addPrim(coreNums[appList.index("prim")])
 
 def parseOutput(outputType,coreAppIndex):
+	global applications
+	global values
 	readFile = open(outputreadfile,'r')
 	outputs = []
 
@@ -326,9 +330,13 @@ def compileandRun():
 
 def main():
 		# dummy example
-	global applications = ["prim"]
-	global chanMax = NUMCORES_INIT
-	global values = []	
+	global applications
+	global chanMax 
+	global values	
+	global MCMAIN_BASE_PATH
+
+	applications = []
+	applications.append("prim")
 
 	numCores = [4]
 
