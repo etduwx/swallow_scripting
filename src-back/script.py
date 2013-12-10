@@ -186,7 +186,7 @@ def editMCMain(appToAdd,measurePower):
 			flag = 1
 			newFile.write(line) 
 		elif flag  == 1:
-			newFile.write('on stdcore[i] : ' + str(appToAdd) + '_main(c[NCORES],1,k) ; \n')
+			newFile.write('\ton stdcore[i] : ' + str(appToAdd) + '_main(c[NCORES],1,k) ; \n')
 			newFile.write(line)
 			flag = 0
 		else:
