@@ -86,19 +86,19 @@ c_in :> foo;
 
 //      client_createThread(1,100,0,16);
 
-      control_channel <: (char) POWERMEASURE_START;
+      //control_channel <: (char) POWERMEASURE_START;
       while(num_done < NUM_CHILDREN){
 	      getCompletedSignal(myChannels);
 	      num_done++;
       }
-      control_channel <: (char) POWERMEASURE_STOP;
-      control_channel <: (char) POWERMEASURE_READVALUES;
+      //control_channel <: (char) POWERMEASURE_STOP;
+      //control_channel <: (char) POWERMEASURE_READVALUES;
 
-control_channel :> printer[0];
+//control_channel :> printer[0];
 
 		 for (unsigned k = 1; k < 8; k++){
 
-control_channel :> tempor;
+//control_channel :> tempor;
 
 		 printer[k] = (tempor*1000/(double) printer[0]) ;
 
@@ -818,8 +818,8 @@ t :> time_end;
    printer[4] = 0xbadbeef;
    printer[5] = sum2*counter2;
   //printer[0] = 1000*double(printer[5])/double(printer[3]);
-  //printer[0] = printer[1];
-  //if(rank==0) printMany(1,printer);	
+  printer[0] = printer[1];
+  if(rank==0) printMany(1,printer);	
    time_end += 100000000;
    channelSendWord(parentCommunicationChannel,4);
   }

@@ -84,8 +84,8 @@ def editPrimBody(typeOfEditing):
 def editPrimHeader(coreList,measurePower):
 	numChildren = len(coreList)
 
-	match_x = "DIV_DEGREE_SWALLOW_X "
-	match_y = "DIV_DEGREE_SWALLOW_Y "
+	match_x = "#define DIV_DEGREE_SWALLOW_X "
+	match_y = "#define DIV_DEGREE_SWALLOW_Y "
 	match_children = "#define NUM_CHILDREN_SWALLOW "
 
 	print numChildren

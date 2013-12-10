@@ -35,7 +35,8 @@ int main(void)
 	on stdcore[i] : startSync(c[i]);
 }
 	par (int i = 1 ; i < 2 ; i += 1) {
-on stdcore[i] : prim_main(c[NCORES],1,k) ;	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
+on stdcore[i] : prim_main(c[NCORES],1,k) ; 
+	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
 	on stdcore[i] : powerMeasure(k);
 }
 
@@ -49,13 +50,16 @@ on stdcore[i] : prim_main(c[NCORES],1,k) ;	on stdcore[i] : nOS_start(c[i],c[i+1]
 	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
 } 
 	par (int i = 12 ; i < 16 ; i += 1) {
-on stdcore[i] : prim_main(c[NCORES],1,k) ;	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
+on stdcore[i] : prim_main(c[NCORES],1,k) ; 
+	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
 } 
 	par (int i = 16 ; i < 17 ; i += 1) {
-on stdcore[i] : prim_main(c[NCORES],1,k) ;	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
+on stdcore[i] : prim_main(c[NCORES],1,k) ; 
+	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
 }
 	par (int i = 17 ; i < NCORES ; i += 1) {
-on stdcore[i] : prim_main(c[NCORES],1,k) ;	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
+on stdcore[i] : prim_main(c[NCORES],1,k) ; 
+	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
 } 
 
 /*	par{

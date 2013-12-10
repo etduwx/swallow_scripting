@@ -6,7 +6,7 @@
 
 #define DIV_DEGREE_SWALLOW_X 4 // the degree to which the image is divided along each dimension (can only result in a square number of small images)
 #define DIV_DEGREE_SWALLOW_Y 4
-#define NUM_CHILDREN 16
+#define NUM_CHILDREN_SWALLOW 16
 #define STARTDELAY 100000000
 #define CONTROL_INTERVAL 10
 
