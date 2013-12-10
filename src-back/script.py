@@ -84,8 +84,8 @@ def editPrimBody(typeOfEditing):
 def editPrimHeader(coreList,measurePower):
 	numChildren = len(coreList)
 
-	match_x = "DIV_DEG_SWALLOW_X"
-	match_y = "DIV_DEG_SWALLOW_Y"
+	match_x = "DIV_DEGREE_SWALLOW_X"
+	match_y = "DIV_DEGREE_SWALLOW_Y"
 
 	if(numChildren==4):
 		div_x = 2
@@ -111,9 +111,9 @@ def editPrimHeader(coreList,measurePower):
 	newFile = open(abs_path,'w')
 	for line in baseFile:
 		if match_x in line:
-			newFile.write("#define DIV_DEG_SWALLOW_X" + str(div_x))
+			newFile.write("#define DIV_DEG_SWALLOW_X " + str(div_x) + "\n")
 		elif match_y in line:
-			newFile.write("#define DIV_DEG_SWALLOW_Y" + str(div_y))
+			newFile.write("#define DIV_DEG_SWALLOW_Y " + str(div_y) + "\n")
 		else:
 			newFile.write(line)
 
@@ -180,7 +180,7 @@ def editMCMain(appToAdd,measurePower):
 			flag = 1
 			newFile.write(line) 
 		elif flag  == 1:
-			newFile.write('on stdcore[i] : ' + str(appToAdd) + '_main(c[NCORES],1,k) ;')
+			newFile.write('on stdcore[i] : ' + str(appToAdd) + '_main(c[NCORES],1,k) ; \n')
 			newFile.write(line)
 			flag = 0
 		else:
