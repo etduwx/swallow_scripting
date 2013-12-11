@@ -8,7 +8,7 @@ filename = "blur.h"
 filename_xc = "blur.xc"
 match = "#define STAGES_OF_PIPELINE"
 
-outputfile = "output2.txt"
+outputfile = "results.csv"
 outputreadfile = "print_output.txt"
 
 PARENTCORE_ID = 1
@@ -296,7 +296,9 @@ def runExperiments(appList,coreNums):
 
 				abc = []		
 				for z in xrange(len(coreList)):
-					abc.append(str(coreList[z]))
+					temp = str(coreList[z])
+					temp = temp.replace(",","")
+					abc.append(temp)
 				#print(values)
 
 				for coreAppIndex in xrange(len(appList)):
@@ -381,6 +383,8 @@ def main():
 	global chanMax 
 	global values	
 	global MCMAIN_BASE_PATH
+	global outputfile
+
 
 	applications = []
 	applications.append("prim")
@@ -399,6 +403,12 @@ def main():
 
 	if os.path.exists(outputfile):
 		os.remove(outputfile)
+
+	f = open(outputfile,'w+')
+
+	f.write("Application 1, Application 2, Application 3, Cores App 1, Cores App 2, Cores App 3, Power Stripe 1, Power Stripe 2, Power Stripe 3, Power Stripe 4, Ratio App 1, Ratio App 2, Ratio App 3, Time App 1, Time App 2, Time App 3 \n")
+
+	f.close()
 
 	for i in (4,6,8,9,12):
 		numCores = [i]
