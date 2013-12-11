@@ -86,6 +86,8 @@ def editPrimHeader(coreList,measurePower):
 
 	match_x = "#define DIV_DEGREE_PRIM_X "
 	match_y = "#define DIV_DEGREE_PRIM_Y "
+	match_width = "#define MAZEWIDTH "
+	match_length = "#define MAZELENGTH "
 	match_children = "#define NUM_CHILDREN_PRIM "
 
 	#print numChildren
@@ -120,6 +122,10 @@ def editPrimHeader(coreList,measurePower):
 			newFile.write(match_y + str(div_y) + "\n")
 		elif match_children in line:
 			newFile.write(match_children + str(numChildren) + "\n")
+		elif match_width in line:
+			newFile.write(match_width + str(div_x*8) + "\n")
+		elif match_length in line:
+			newFile.write(match_length + str(div_y*8) + "\n")
 		else:
 			newFile.write(line)
 
@@ -218,8 +224,6 @@ def runExperiments(appList,coreNums):
 	global values
 	global outputfile
 
-	if os.path.exists(outputfile):
-		os.remove(outputfile)
 
 	indices = [0] * 3
 	states = ["none","none","none","none"]
@@ -389,7 +393,16 @@ def main():
 #	for x in (8,12):
 
 #		editFile(x)
-	runExperiments(applications,numCores)
+
+
+
+
+	if os.path.exists(outputfile):
+		os.remove(outputfile)
+
+	for i in (4,6,8,9,12):
+		numCores = [i]
+		runExperiments(applications,numCores)
 
 # 	add blur
 
