@@ -168,8 +168,6 @@ def print_to_csv(appList,coreList,values):
 	f.write("\n")
 	f.close()		
 
-
-
 # Need to add power or not power functionality
 def editMCMain(appToAdd,measurePower):
 	global MCMAIN_BASE_PATH
@@ -313,6 +311,7 @@ def runExperiments(appList,coreNums):
 def parseOutput(outputType,coreAppIndex):
 	global applications
 	global values
+	global outputreadfile
 	readFile = open(outputreadfile,'r')
 	outputs = []
 
