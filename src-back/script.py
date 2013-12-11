@@ -173,7 +173,7 @@ def print_to_csv(appList,coreList,values):
 def editMCMain(appToAdd,measurePower):
 	global MCMAIN_BASE_PATH
 	global MCMAIN_PATH
-	match = "par (int i = " + str(PARENTCORE_IDi + ' ;') 
+	match = "par (int i = " + str(PARENTCORE_ID + ' ;') 
 	fh, abs_path = mkstemp()
 	newFile = open(abs_path,'w')
 	baseFile = open(MCMAIN_BASE_PATH)
