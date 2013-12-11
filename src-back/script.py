@@ -130,6 +130,7 @@ def editPrimHeader(coreList,measurePower):
 	shutil.move(abs_path,PRIMS_HEADER_PATH)
 
 def print_to_csv(appList,coreList,values):
+	global outputfile
 	f = open(outputfile,"a+")
 	for i in xrange(3):
 		if i < len(appList):
@@ -296,13 +297,13 @@ def runExperiments(appList,coreNums):
 						if any("mergesort" in s for s in appList):
 							addMergeSort(coreList[appinds[2]],states[appinds[2]])
 
-						#compileandRun()
-						#parseOutput(i,coreAppIndex)
+						compileandRun()
+						parseOutput(i,coreAppIndex)
 						i += 1
 				abc = []		
 				for z in xrange(len(coreList)):
 					abc.append(str(coreList[z]))
-				#print_to_csv(apps,abc,values)
+				print_to_csv(apps,abc,values)
 
 
 #	if any("prim" in s for s in appList):
@@ -332,7 +333,7 @@ def compileandRun():
 	os.system('./build3')
 	sleep(10)
 	p1 = Popen(["python", "run.py", "prim"], stdout=PIPE, stdin=PIPE, shell=True, preexec_fn=os.setsid)
-	sleep(5)
+	sleep(10)
 	os.killpg(p1.pid,signal.SIGTERM)
 
 def main():
