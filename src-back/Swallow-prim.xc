@@ -177,13 +177,13 @@ t :> time;
 					 //			printing_again[1]= program_status;
 					 //			//printMany(2,printing_again);
 
-					 if(rank >= DIV_DEGREE_SWALLOW_X)
+					 if(rank >= DIV_DEGREE_PRIM_X)
 						 north <: program_status -1;
-					 if(rank % DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_X - 1)	
+					 if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1)	
 						 east <: program_status -1;	
-					 if(rank/DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_Y - 1)			
+					 if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1)			
 						 south <: program_status -1;	
-					 if(rank % DIV_DEGREE_SWALLOW_X != 0)
+					 if(rank % DIV_DEGREE_PRIM_X != 0)
 						 west <: program_status -1;	
 					 //t :> time_end_cycle;
 					 //			printOne(time_end_cycle-time);
@@ -401,9 +401,9 @@ void xc_listen_check_wall(unsigned parentCommunicationChannel, unsigned rank,cha
 	unsigned last_visited = 0;
 
 	unsigned flag,flag2;
-	unsigned visited[(MAZELENGTH/DIV_DEGREE_SWALLOW_Y)][(MAZEWIDTH/DIV_DEGREE_SWALLOW_X)];
-	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_SWALLOW_X+1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_Y) + (MAZELENGTH/DIV_DEGREE_SWALLOW_Y + 1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_X);
-	unsigned walls[(MAZEWIDTH/DIV_DEGREE_SWALLOW_X+1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_Y) + (MAZELENGTH/DIV_DEGREE_SWALLOW_Y + 1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_X)+1];
+	unsigned visited[(MAZELENGTH/DIV_DEGREE_PRIM_Y)][(MAZEWIDTH/DIV_DEGREE_PRIM_X)];
+	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X);
+	unsigned walls[(MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X)+1];
 
 	unsigned type;
 	unsigned num_visited = 0;
@@ -438,8 +438,8 @@ void xc_listen_check_wall(unsigned parentCommunicationChannel, unsigned rank,cha
 	count_s = 0;
 	
 
-	for(unsigned i=0;i<MAZELENGTH/DIV_DEGREE_SWALLOW_Y;i++){
-		for(unsigned j=0;j<MAZEWIDTH/DIV_DEGREE_SWALLOW_X;j++){
+	for(unsigned i=0;i<MAZELENGTH/DIV_DEGREE_PRIM_Y;i++){
+		for(unsigned j=0;j<MAZEWIDTH/DIV_DEGREE_PRIM_X;j++){
 			visited[i][j] = 0;
 		}
 	}
@@ -541,10 +541,10 @@ t:> time_end_cycle;
 	//printMany(2,printer);
 
 com_channel :> index;
-	     if(index >=((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X)){
-		     in_var = index - ((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		     row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
-		     column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
+	     if(index >=((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X)){
+		     in_var = index - ((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		     row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
+		     column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
 		     printer[1] = 8;
 		     printer[2] = row;
 		     printer[3] = column;
@@ -562,8 +562,8 @@ com_channel :> index;
 	     }  			
 	     else{
 		     in_var = index;
-		     row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		     column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
+		     row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		     column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X);
 		     printer[1] = 14;
 		     printer[2] = row;
 		     printer[3] = column;
@@ -590,10 +590,10 @@ com_channel :> index;
 
 				    printer[1] = 9;
 com_channel :> index;
-	     if(index >=((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X)){
-		     in_var = index - ((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		     row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
-		     column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
+	     if(index >=((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X)){
+		     in_var = index - ((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		     row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
+		     column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
 		     printer[1] = 12;
 		     printer[2] = row;
 		     printer[3] = column;
@@ -603,15 +603,15 @@ com_channel :> index;
 			     com_channel <: visited[row][0];
 		     else{
 			     //		t :> time_begin_cycle;
-			     com_channel <: visited[row][MAZEWIDTH/DIV_DEGREE_SWALLOW_X-1];
+			     com_channel <: visited[row][MAZEWIDTH/DIV_DEGREE_PRIM_X-1];
 			     //		t :> time_end_cycle;
 			     //		printOne(time_end_cycle - time_begin_cycle);
 		     }
 	     }  			
 	     else{
 		     in_var = index;
-		     row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		     column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
+		     row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		     column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X);
 		     printer[2] = row;
 		     printer[3] = column;
 		     printer[4] = index;
@@ -619,7 +619,7 @@ com_channel :> index;
 		     if(row == 0)
 			     com_channel <: visited[0][column];
 		     else
-			     com_channel <: visited[MAZELENGTH/DIV_DEGREE_SWALLOW_Y-1][column];
+			     com_channel <: visited[MAZELENGTH/DIV_DEGREE_PRIM_Y-1][column];
 	     }
 
 	     break;
@@ -632,10 +632,10 @@ com_channel :> index;
 
 				    printer[1] = 10;
 com_channel :> index;
-	     if(index >=((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X)){
-		     in_var = index - ((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		     row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
-		     column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
+	     if(index >=((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X)){
+		     in_var = index - ((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		     row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
+		     column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
 		     printer[2] = row;
 		     printer[3] = column;
 		     printer[4] = index;
@@ -646,15 +646,15 @@ com_channel :> index;
 			     walls[index] = 0;
 		     }
 		     else{
-			     if(visited[row][MAZEWIDTH/DIV_DEGREE_SWALLOW_X-1] == 0) num_visited++;
-			     visited[row][MAZEWIDTH/DIV_DEGREE_SWALLOW_X-1] = 1;
+			     if(visited[row][MAZEWIDTH/DIV_DEGREE_PRIM_X-1] == 0) num_visited++;
+			     visited[row][MAZEWIDTH/DIV_DEGREE_PRIM_X-1] = 1;
 			     walls[index] = 0;	
 		     }
 	     }  			
 	     else{
 		     in_var = index;
-		     row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		     column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
+		     row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		     column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X);
 		     printer[0] = rank;
 		     printer[2] = row;
 		     printer[3] = column;
@@ -666,8 +666,8 @@ com_channel :> index;
 			     walls[index] = 0;
 		     }
 		     else{
-			     if(visited[MAZELENGTH/DIV_DEGREE_SWALLOW_Y-1][column] == 0) num_visited++;
-			     visited[MAZELENGTH/DIV_DEGREE_SWALLOW_Y-1][column] = 1;
+			     if(visited[MAZELENGTH/DIV_DEGREE_PRIM_Y-1][column] == 0) num_visited++;
+			     visited[MAZELENGTH/DIV_DEGREE_PRIM_Y-1][column] = 1;
 			     walls[index] = 0;
 		     }
 	     }
@@ -686,9 +686,9 @@ t:> time_end_cycle;
 				type = 1;
 				index = in_var;
 east_connection :> yay;
-		 in_var = in_var - ((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		 row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
-		 column = MAZEWIDTH/DIV_DEGREE_SWALLOW_X - 1;
+		 in_var = in_var - ((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		 row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
+		 column = MAZEWIDTH/DIV_DEGREE_PRIM_X - 1;
 		 printer[1] = 6;
 		 ////printMany(2,printer);
 		 if(visited[row][column] == yay){
@@ -716,7 +716,7 @@ t:> time_end_cycle;
 				 index = in_var;
 north_connection :> yay;
 		  row = 0;
-		  column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
+		  column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X);
 		  printer[1] = 4;
 		  ////printMany(2,printer);
 		  if(visited[row][column] == yay){
@@ -744,8 +744,8 @@ t:> time_end_cycle;
 				type = 1;
 				index = in_var;
 west_connection :> yay; 
-		 in_var = in_var - ((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		 row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
+		 in_var = in_var - ((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		 row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
 		 column = 0;
 		 printer[1] = 2;
 		 ////printMany(2,printer);
@@ -774,8 +774,8 @@ t:> time_end_cycle;
 				 type = 1;
 				 index = in_var;
 south_connection :> yay; 
-		  row = MAZELENGTH/DIV_DEGREE_SWALLOW_Y - 1;
-		  column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
+		  row = MAZELENGTH/DIV_DEGREE_PRIM_Y - 1;
+		  column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X);
 		  printer[1] = 0;
 		  ////printMany(2,printer);
 		  if(visited[row][column] == yay){
@@ -835,9 +835,9 @@ void xc_prim_child_root(unsigned rank, chanend com_channel){
 	// array to store visited cells
 	// variable to keep track of the number of visited cells
 
-	unsigned walls_touched[(MAZEWIDTH/DIV_DEGREE_SWALLOW_X+1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_Y) + (MAZELENGTH/DIV_DEGREE_SWALLOW_Y + 1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_X)];
-	unsigned mazesize = (MAZEWIDTH/DIV_DEGREE_SWALLOW_X) * (MAZELENGTH/DIV_DEGREE_SWALLOW_Y);
-	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_SWALLOW_X+1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_Y) + (MAZELENGTH/DIV_DEGREE_SWALLOW_Y + 1) * (MAZELENGTH/DIV_DEGREE_SWALLOW_X);
+	unsigned walls_touched[(MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X)];
+	unsigned mazesize = (MAZEWIDTH/DIV_DEGREE_PRIM_X) * (MAZELENGTH/DIV_DEGREE_PRIM_Y);
+	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X);
 	unsigned index;
 	unsigned foo,row,column,in_var,response;
 	unsigned print_ids[6];
@@ -856,10 +856,10 @@ void xc_prim_child_root(unsigned rank, chanend com_channel){
 
 	//	//printMany(6,print_ids);
 
-	if(rank >= DIV_DEGREE_SWALLOW_X) siblingCommunicationChannel_north = client_allocateNewLocalChannel(0);
-	if(rank % DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_X - 1) siblingCommunicationChannel_east = client_allocateNewLocalChannel(1);
-	if(rank/DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_Y - 1) siblingCommunicationChannel_south = client_allocateNewLocalChannel(2);
-	if(rank % DIV_DEGREE_SWALLOW_X != 0) siblingCommunicationChannel_west = client_allocateNewLocalChannel(3);
+	if(rank >= DIV_DEGREE_PRIM_X) siblingCommunicationChannel_north = client_allocateNewLocalChannel(0);
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) siblingCommunicationChannel_east = client_allocateNewLocalChannel(1);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) siblingCommunicationChannel_south = client_allocateNewLocalChannel(2);
+	if(rank % DIV_DEGREE_PRIM_X != 0) siblingCommunicationChannel_west = client_allocateNewLocalChannel(3);
 
 	print_ids[0] = rank;
 	print_ids[1] = siblingCommunicationChannel_north;
@@ -870,10 +870,10 @@ void xc_prim_child_root(unsigned rank, chanend com_channel){
 	////printMany(5,print_ids);
 
 
-	if(rank >= DIV_DEGREE_SWALLOW_X) channelListen(siblingCommunicationChannel_north);
-	if(rank % DIV_DEGREE_SWALLOW_X != 0) channelListen(siblingCommunicationChannel_west);
-	if(rank % DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_X - 1) channelListen(siblingCommunicationChannel_east);
-	if(rank/DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_Y - 1) channelListen(siblingCommunicationChannel_south);
+	if(rank >= DIV_DEGREE_PRIM_X) channelListen(siblingCommunicationChannel_north);
+	if(rank % DIV_DEGREE_PRIM_X != 0) channelListen(siblingCommunicationChannel_west);
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) channelListen(siblingCommunicationChannel_east);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) channelListen(siblingCommunicationChannel_south);
 
 	numero = 0;
 
@@ -900,16 +900,16 @@ t:> time_begin;
  numero++;
   while(1){
 
-	  if(index >=((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X)){
-		  in_var = index - ((MAZELENGTH/DIV_DEGREE_SWALLOW_Y)+1)*(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		  row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
-		  column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X + 1);
+	  if(index >=((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X)){
+		  in_var = index - ((MAZELENGTH/DIV_DEGREE_PRIM_Y)+1)*(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		  row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
+		  column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X + 1);
 		  print_ids[0] = rank;
 		  print_ids[1] = 13;
 		  print_ids[2] = row;
 		  print_ids[3] = column;
 		  ////printMany(4,print_ids);
-		  if(column !=0 && column != MAZEWIDTH/DIV_DEGREE_SWALLOW_X){
+		  if(column !=0 && column != MAZEWIDTH/DIV_DEGREE_PRIM_X){
 				print_ids[0] = rank + 0x30000000;
 	print_ids[1] = 0;
 	//printMany(2,print_ids);
@@ -927,12 +927,12 @@ t:> time_begin;
 			  com_channel <: 2;
 			  com_channel <: index;
 com_channel :> foo;
-	     if(column > 0 && (rank % DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_X - 1)){
+	     if(column > 0 && (rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1)){
 		print_ids[0] = rank + 0x30000000;
 	print_ids[1] = 2;
 	//printMany(2,print_ids);
 
-		     channelSendWord(siblingCommunicationChannel_east,index-MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
+		     channelSendWord(siblingCommunicationChannel_east,index-MAZEWIDTH/DIV_DEGREE_PRIM_X);
 		     channelSendWord(siblingCommunicationChannel_east,foo);
 		     response = channelReceiveWord(siblingCommunicationChannel_east);
 		     if(response){
@@ -946,12 +946,12 @@ com_channel :> foo;
 			     break;
 		     }else
 			     break;			
-	     }else if(column==0 && (rank % DIV_DEGREE_SWALLOW_X != 0)){
+	     }else if(column==0 && (rank % DIV_DEGREE_PRIM_X != 0)){
 				print_ids[0] = rank + 0x30000000;
 	print_ids[1] = 4;
 	//printMany(2,print_ids);
 
-		     channelSendWord(siblingCommunicationChannel_west,index + MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
+		     channelSendWord(siblingCommunicationChannel_west,index + MAZEWIDTH/DIV_DEGREE_PRIM_X);
 		     channelSendWord(siblingCommunicationChannel_west,foo);
 		     response = channelReceiveWord(siblingCommunicationChannel_west);
 		     if(response){
@@ -970,9 +970,9 @@ com_channel :> foo;
 		  }  			
 	  }else{
 		  in_var = index;
-		  row = in_var/(MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		  column = in_var % (MAZEWIDTH/DIV_DEGREE_SWALLOW_X);
-		  if(row !=0 && row != MAZELENGTH/DIV_DEGREE_SWALLOW_Y){
+		  row = in_var/(MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		  column = in_var % (MAZEWIDTH/DIV_DEGREE_PRIM_X);
+		  if(row !=0 && row != MAZELENGTH/DIV_DEGREE_PRIM_Y){
 			  print_ids[0] = rank;
 			  print_ids[1] = 4;
 			  print_ids[2] = row;
@@ -995,12 +995,12 @@ com_channel :> foo;
 			  com_channel <: 2;
 			  com_channel <: index ;
 com_channel :> foo;
-	     if(row > 0 &&(rank/DIV_DEGREE_SWALLOW_X != DIV_DEGREE_SWALLOW_Y - 1) ){
+	     if(row > 0 &&(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) ){
 			print_ids[0] = rank + 0x30000000;
 	print_ids[1] = 3;
 	//printMany(2,print_ids);
 
-		     channelSendWord(siblingCommunicationChannel_south,index-(MAZEWIDTH/DIV_DEGREE_SWALLOW_X)*(MAZELENGTH/DIV_DEGREE_SWALLOW_Y));
+		     channelSendWord(siblingCommunicationChannel_south,index-(MAZEWIDTH/DIV_DEGREE_PRIM_X)*(MAZELENGTH/DIV_DEGREE_PRIM_Y));
 		     channelSendWord(siblingCommunicationChannel_south,foo);
 		     response = channelReceiveWord(siblingCommunicationChannel_south);
 		     if(response){
@@ -1015,12 +1015,12 @@ com_channel :> foo;
 		     }
 		     else
 			     break;			
-	     }else if(row==0 && (rank >= DIV_DEGREE_SWALLOW_X)){ 
+	     }else if(row==0 && (rank >= DIV_DEGREE_PRIM_X)){ 
 					print_ids[0] = rank + 0x30000000;
 	print_ids[1] = 1;
 	//printMany(2,print_ids);
 
-		     channelSendWord(siblingCommunicationChannel_north,index +(MAZEWIDTH/DIV_DEGREE_SWALLOW_X)*(MAZELENGTH/DIV_DEGREE_SWALLOW_Y));
+		     channelSendWord(siblingCommunicationChannel_north,index +(MAZEWIDTH/DIV_DEGREE_PRIM_X)*(MAZELENGTH/DIV_DEGREE_PRIM_Y));
 		     channelSendWord(siblingCommunicationChannel_north,foo);
 		     response = channelReceiveWord(siblingCommunicationChannel_north);
 		     if(response){

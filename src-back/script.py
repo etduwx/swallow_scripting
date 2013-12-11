@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/usr/bin/python -u
 import os, subprocess, signal, shutil
 from time import sleep
 from tempfile import mkstemp
@@ -55,8 +55,8 @@ def editFile(x):
 def getReplacementsPrims(typeofEditing):
 		return {
 			'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
-			'ratio' : {'//if(rank==0) printMany':'if(rank==0) printMany','//printer[0] = 1000*':'printer[0] = 1000*'},
-			'time'  : {'//if(rank==0) printMany':'if(rank==0) printMany','//printer[0] = printer[1]':'printer[0] = printer[1]'}
+			'ratio' : {'//if(rank==3) printMany':'if(rank==3) printMany','//printer[0] = 1000*':'printer[0] = 1000*'},
+			'time'  : {'//if(rank==3) printMany':'if(rank==3) printMany','//printer[0] = printer[1]':'printer[0] = printer[1]'}
 			}.get(typeofEditing,{'//control_channel':'control_channel', '//printMany(8':'printMany(8'})
 
 def editPrimBody(typeOfEditing):
@@ -84,12 +84,12 @@ def editPrimBody(typeOfEditing):
 def editPrimHeader(coreList,measurePower):
 	numChildren = len(coreList)
 
-	match_x = "#define DIV_DEGREE_SWALLOW_X "
-	match_y = "#define DIV_DEGREE_SWALLOW_Y "
-	match_children = "#define NUM_CHILDREN_SWALLOW "
+	match_x = "#define DIV_DEGREE_PRIM_X "
+	match_y = "#define DIV_DEGREE_PRIM_Y "
+	match_children = "#define NUM_CHILDREN_PRIM "
 
-	print numChildren
-	print coreList
+	#print numChildren
+	#print coreList
 
 	if(numChildren==4):
 		div_x = 2
@@ -148,23 +148,23 @@ def print_to_csv(appList,coreList,values):
 		f.write(values[i] + ",")
 
 	for x in xrange(2):
-	#	for i in xrange(len(appList)):
-		for i in xrange(3):
-			if(i < len(appList)):
+		for i in xrange(len(appList)):
+		#for i in xrange(3):
+		#	if(i < len(appList)):
+		#		f.write((values[4+len(appList)*x+i]) + ",")
+		#	elif(x == 1 and i== 2):
+		#		break
+		#	else:
+		#		f.write(",")
+
+
+			if(x == 1 and i==(len(appList)-1)):	
+				f.write((values[4+len(appList)*x+i]))
+			else:		
 				f.write((values[4+len(appList)*x+i]) + ",")
-			elif(x == 1 and i== 2):
-				break
-			else:
-				f.write(",")
 
-
-	#		if(x == 1 and i==(len(appList)-1)):	
-	#			f.write((values[4+len(appList)*x+i]))
-	#		else:		
-	#			f.write((values[4+len(appList)*x+i]) + ",")
-
-	#	for j in xrange(3-len(appList)):
-	#		f.write(",")
+		for j in xrange(3-len(appList)):
+			f.write(",")
 		
 	f.write("\n")
 	f.close()		
@@ -173,7 +173,7 @@ def print_to_csv(appList,coreList,values):
 def editMCMain(appToAdd,measurePower):
 	global MCMAIN_BASE_PATH
 	global MCMAIN_PATH
-	match = "par (int i = " + str(PARENTCORE_ID) + ' ;') 
+	match = "par (int i = " + str(PARENTCORE_ID) + ' ;' 
 	fh, abs_path = mkstemp()
 	newFile = open(abs_path,'w')
 	baseFile = open(MCMAIN_BASE_PATH)
@@ -185,6 +185,10 @@ def editMCMain(appToAdd,measurePower):
 			flag = 1
 			newFile.write(line) 
 		elif flag  == 1:
+			#newFile.write('\ton stdcore[i] : ' + str(appToAdd) + '_main(c[NCORES],1,k) ; \n')
+			newFile.write(line)
+			flag = 2
+		elif flag == 2:
 			newFile.write('\ton stdcore[i] : ' + str(appToAdd) + '_main(c[NCORES],1,k) ; \n')
 			newFile.write(line)
 			flag = 0
@@ -210,25 +214,41 @@ def addPrim(coreList, measurementType):
 	editPrimBody(measurementType) # power=1,ratio=2,time=3
 
 def runExperiments(appList,coreNums):
-	
+
+	global values
+	global outputfile
+
+	if os.path.exists(outputfile):
+		os.remove(outputfile)
+
 	indices = [0] * 3
 	states = ["none","none","none","none"]
 	appinds = [0] * 3
 	upperBound = 3 + sum(coreNums)
 	lastInd = 0
 	cores = [0] * 3
+	curLastind = 0
+	primflag = 0
 
+	if any("prim" in s for s in appList):
+		lastInd += 1
+		cores[curLastind] = coreNums[appList.index("prim")]
+		curLastind += 1
+		primflag = 1
 	if any("blur" in s for s in appList):
 		appinds[0] = curLastind
 		lastInd += 1
 		cores[curLastind] = coreNums[appList.index("blur")]
+		curLastind += 1
 	if any("sobel" in s for s in appList):
 		appinds[1] = curLastind
 		lastInd += 1
 		cores[curLastind] = coreNums[appList.index("sobel")]
+		curLastind += 1
 	if any("mergesort" in s for s in appList):
 		appinds[2] = curLastind
 		cores[curLastind] = coreNums[appList.index("mergesort")]
+		curLastind += 1
 		lastInd += 1
 
 	currentInd = lastInd - 1
@@ -243,7 +263,7 @@ def runExperiments(appList,coreNums):
 	else:
 		lim2 = 1
 
-	if lastInd >=1:
+	if lastInd >=1 and primflag == 0:
 		lim1 = upperBound - cores[0]
 	else:
 		lim1 = 1
@@ -269,6 +289,12 @@ def runExperiments(appList,coreNums):
 				if any("mergesort" in s for s in appList):
 					coreList.append(range(4+indices[appinds[2]],4+indices[appinds[2]]+coreNums[appList.index("mergesort")]))
 					apps.append("mergesort")
+
+				abc = []		
+				for z in xrange(len(coreList)):
+					abc.append(str(coreList[z]))
+				#print(values)
+
 				for coreAppIndex in xrange(len(appList)):
 					i = 0
 					while(i<4):
@@ -297,12 +323,13 @@ def runExperiments(appList,coreNums):
 						if any("mergesort" in s for s in appList):
 							addMergeSort(coreList[appinds[2]],states[appinds[2]])
 
+						print("Now compiling and running " + str(apps) + " on cores" + str(abc) +", getting " + states[coreAppIndex] + " from " + str(apps[coreAppIndex]) +"... \n")
+
 						compileandRun()
 						parseOutput(i,coreAppIndex)
 						i += 1
-				abc = []		
-				for z in xrange(len(coreList)):
-					abc.append(str(coreList[z]))
+
+				
 				print_to_csv(apps,abc,values)
 
 
@@ -321,20 +348,28 @@ def parseOutput(outputType,coreAppIndex):
 
 	readFile.close()
 
+	for i in xrange(len(outputs)):
+		if outputType == 1:
+			temporary = float(float(int(outputs[i],16))/float(1000))
+		else:
+			temporary = int(outputs[i],16)
+
+		outputs[i] = str(temporary)
+
 	if outputType == 0:
 		values[0:4] = outputs[1:5]
 	elif outputType == 1:
-		values[4+coreAppIndex] = outputs[0]
+		values.append(outputs[0])
 	elif outputType == 2:
-		values[4+len(applications)+coreAppIndex] = outputs[0]
-
+		values.append(outputs[0])
 
 def compileandRun():
 	os.system('./build3')
-	sleep(10)
-	p1 = Popen(["python", "run.py", "prim"], stdout=PIPE, stdin=PIPE, shell=True, preexec_fn=os.setsid)
-	sleep(10)
-	os.killpg(p1.pid,signal.SIGTERM)
+	sleep(5)
+	p1 = subprocess.Popen(["python", "run.py", "prim"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+	sleep(5)
+
+	p1.kill()
 
 def main():
 		# dummy example

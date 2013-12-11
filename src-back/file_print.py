@@ -22,8 +22,6 @@ rxsoc.bind((RX_IP, RX_PORT))
 
 # print('Receiving data')
 
-start_time = time.time()
-
 
 outfile = open(output_file,'w+')
 
@@ -35,13 +33,14 @@ while 1:
 	i = 1
 	while i < l:
 		i = i + 8
-		outfile.write(str(rxdata.encode("hex")[4:12]) + ':')
+		outfile.write(str(rxdata.encode("hex")[4:12]) + ': ')
 		if i < l:
 			outfile.write(str(rxdata.encode("hex")[11+i:19+i]) + ',')
 		else:
 			outfile.write(str(rxdata.encode("hex")[11+i:19+i]) + '\n')
 
-
+	outfile.close()
+	outfile = open(output_file,'a')
 	
 rxsoc.close()
-outfile.close()
+

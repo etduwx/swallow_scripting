@@ -38,9 +38,9 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	unsigned channels_lookup[6];
 	unsigned os_debug[3];
 
-	unsigned visited[(MAZELENGTH/DIV_DEGREE_Y)][(MAZEWIDTH/DIV_DEGREE_X)];
-	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_X+1) * (MAZELENGTH/DIV_DEGREE_Y) + (MAZELENGTH/DIV_DEGREE_Y + 1) * (MAZELENGTH/DIV_DEGREE_X);
-	unsigned walls_touched[(MAZEWIDTH/DIV_DEGREE_X+1) * (MAZELENGTH/DIV_DEGREE_Y) + (MAZELENGTH/DIV_DEGREE_Y + 1) * (MAZELENGTH/DIV_DEGREE_X)];
+	unsigned visited[(MAZELENGTH/DIV_DEGREE_PRIM_Y)][(MAZEWIDTH/DIV_DEGREE_PRIM_X)];
+	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X);
+	unsigned walls_touched[(MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X)];
 
 	parent_chan = client_lookupParentChanend(parent_id, rank);
 	parentCommunicationChannel = client_connectNewLocalChannel(12, parent_chan);
@@ -51,7 +51,7 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 //	printMany(3,os_debug);
 	delay_execution(STARTDELAY);
 
-	if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) 
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
 		com_channel = client_lookupSpecificChanend(rank+OFFSET,THREAD_NO_1,15);
 	else
 		com_channel = client_lookupSpecificChanend(rank+OFFSET,THREAD_NO_2,15);
@@ -68,11 +68,11 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	if(pass_token != 1) asm("ecallt r0");
 
 	//printMany(3,os_debug);
-	if(rank >= DIV_DEGREE_X) north_connection = client_lookupSpecificChanend(rank - DIV_DEGREE_X+OFFSET,THREAD_NO_1, 2);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(rank - DIV_DEGREE_PRIM_X+OFFSET,THREAD_NO_1, 2);
 	os_debug[1] = 51;
 	//printMany(3,os_debug);
-	if(rank % DIV_DEGREE_X != DIV_DEGREE_X - 1) {
-		if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) 
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) {
+		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
 			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NO_1, 3);
 		else
 			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NO_2, 3);
@@ -80,11 +80,11 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 
 	os_debug[1] = 52;
 	//printMany(3,os_debug);
-	if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) south_connection = client_lookupSpecificChanend(rank + DIV_DEGREE_X+OFFSET,THREAD_NO_2, 0);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(rank + DIV_DEGREE_PRIM_X+OFFSET,THREAD_NO_2, 0);
 	os_debug[1] = 53;
 	//printMany(3,os_debug);
-	if(rank % DIV_DEGREE_X != 0) {
-		if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) 
+	if(rank % DIV_DEGREE_PRIM_X != 0) {
+		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
 			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NO_1, 1);
 		else
 			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NO_2, 1);
@@ -99,13 +99,13 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	channels_lookup[0] = rank;
 	//printMany(5,channels_lookup);
 
-	if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) south_connection = client_connectNewLocalChannel(4, south_connection);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_connectNewLocalChannel(4, south_connection);
 	else south_connection = client_allocateNewLocalChannel(8);
-	if(rank % DIV_DEGREE_X != 0) west_connection = client_connectNewLocalChannel(5, west_connection);
+	if(rank % DIV_DEGREE_PRIM_X != 0) west_connection = client_connectNewLocalChannel(5, west_connection);
 	else west_connection = client_allocateNewLocalChannel(9);
-	if(rank >= DIV_DEGREE_X) north_connection = client_connectNewLocalChannel(6, north_connection);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_connectNewLocalChannel(6, north_connection);
 	else north_connection = client_allocateNewLocalChannel(10);
-	if(rank % DIV_DEGREE_X != DIV_DEGREE_X - 1) east_connection = client_connectNewLocalChannel(7, east_connection);
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) east_connection = client_connectNewLocalChannel(7, east_connection);
 	else east_connection = client_allocateNewLocalChannel(11);
 
 	channels_lookup[1] = north_connection;
@@ -117,7 +117,7 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 
 	channelSendWord(parentCommunicationChannel,1);
 	pass_token = channelReceiveWord(parentCommunicationChannel);
-	/*if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) 
+	/*if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
 		consensus_channel = client_lookupSpecificChanend(rank+OFFSET,THREAD_NUMERO_1,21);
 	else
 		consensus_channel = client_lookupSpecificChanend(rank+OFFSET,THREAD_NUMERO_2,21);
@@ -161,12 +161,12 @@ void set_up_consensus(unsigned parent_id, unsigned rank){
 
 	channelListen(consensus_channel);
 
-	parentCommunicationChannel = client_lookupParentChanend(parent_id,rank+NUM_CHILDREN);
+	parentCommunicationChannel = client_lookupParentChanend(parent_id,rank+NUM_CHILDREN_PRIM);
 	parentCommunicationChannel = client_connectNewLocalChannel(12, parentCommunicationChannel);
-	if(rank >= DIV_DEGREE_X) siblingCommunicationChannel_north = client_allocateNewLocalChannel(0);
-	if(rank % DIV_DEGREE_X != DIV_DEGREE_X - 1) siblingCommunicationChannel_east = client_allocateNewLocalChannel(1);
-	if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) siblingCommunicationChannel_south = client_allocateNewLocalChannel(2);
-	if(rank % DIV_DEGREE_X != 0) siblingCommunicationChannel_west = client_allocateNewLocalChannel(3);
+	if(rank >= DIV_DEGREE_PRIM_X) siblingCommunicationChannel_north = client_allocateNewLocalChannel(0);
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) siblingCommunicationChannel_east = client_allocateNewLocalChannel(1);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) siblingCommunicationChannel_south = client_allocateNewLocalChannel(2);
+	if(rank % DIV_DEGREE_PRIM_X != 0) siblingCommunicationChannel_west = client_allocateNewLocalChannel(3);
 
 	os_debug[0] = rank;
 	os_debug[1] = parentCommunicationChannel;
@@ -184,11 +184,11 @@ void set_up_consensus(unsigned parent_id, unsigned rank){
 	if(pass_token != 1) asm("ecallt r0");
 
 	//printMany(3,os_debug);
-	if(rank >= DIV_DEGREE_X) north_connection = client_lookupSpecificChanend(rank - DIV_DEGREE_X+OFFSET,THREAD_NUMERO_1, 2);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(rank - DIV_DEGREE_PRIM_X+OFFSET,THREAD_NUMERO_1, 2);
 	os_debug[1] = 51;
 	//printMany(3,os_debug);
-	if(rank % DIV_DEGREE_X != DIV_DEGREE_X - 1) {
-		if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) 
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) {
+		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
 			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NUMERO_1, 3);
 		else
 			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NUMERO_2, 3);
@@ -196,11 +196,11 @@ void set_up_consensus(unsigned parent_id, unsigned rank){
 
 	os_debug[1] = 52;
 	//printMany(3,os_debug);
-	if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) south_connection = client_lookupSpecificChanend(rank + DIV_DEGREE_X+OFFSET,THREAD_NUMERO_2, 0);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(rank + DIV_DEGREE_PRIM_X+OFFSET,THREAD_NUMERO_2, 0);
 	os_debug[1] = 53;
 	//printMany(3,os_debug);
-	if(rank % DIV_DEGREE_X != 0) {
-		if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) 
+	if(rank % DIV_DEGREE_PRIM_X != 0) {
+		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
 			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NUMERO_1, 1);
 		else
 			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NUMERO_2, 1);
@@ -216,22 +216,22 @@ void set_up_consensus(unsigned parent_id, unsigned rank){
 //	printMany(5,channels_lookup);
 
 	channelSendWord(parentCommunicationChannel,1);
-	if(rank >= DIV_DEGREE_X) channelListen(siblingCommunicationChannel_north);
-	if(rank % DIV_DEGREE_X != 0) channelListen(siblingCommunicationChannel_west);
+	if(rank >= DIV_DEGREE_PRIM_X) channelListen(siblingCommunicationChannel_north);
+	if(rank % DIV_DEGREE_PRIM_X != 0) channelListen(siblingCommunicationChannel_west);
 	
 	pass_token = channelReceiveWord(parentCommunicationChannel);
-	if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) south_connection = client_connectNewLocalChannel(4, south_connection);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_connectNewLocalChannel(4, south_connection);
 	else south_connection = client_allocateNewLocalChannel(8);
-	if(rank % DIV_DEGREE_X != 0) west_connection = client_connectNewLocalChannel(5, west_connection);
+	if(rank % DIV_DEGREE_PRIM_X != 0) west_connection = client_connectNewLocalChannel(5, west_connection);
 	else west_connection = client_allocateNewLocalChannel(9);
-	if(rank >= DIV_DEGREE_X) north_connection = client_connectNewLocalChannel(6, north_connection);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_connectNewLocalChannel(6, north_connection);
 	else north_connection = client_allocateNewLocalChannel(10);
-	if(rank % DIV_DEGREE_X != DIV_DEGREE_X - 1) east_connection = client_connectNewLocalChannel(7, east_connection);
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) east_connection = client_connectNewLocalChannel(7, east_connection);
 	else east_connection = client_allocateNewLocalChannel(11);
 
 	channelSendWord(parentCommunicationChannel,1);
-	if(rank % DIV_DEGREE_X != DIV_DEGREE_X - 1) channelListen(siblingCommunicationChannel_east);
-	if(rank/DIV_DEGREE_X != DIV_DEGREE_Y - 1) channelListen(siblingCommunicationChannel_south);
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) channelListen(siblingCommunicationChannel_east);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) channelListen(siblingCommunicationChannel_south);
 
 	pass_token = channelReceiveWord(parentCommunicationChannel);
 
