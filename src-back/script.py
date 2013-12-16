@@ -515,10 +515,10 @@ def runExperiments(appList,coreNums):
     else:
         lim3 = 1
 
-    #if lastInd >=2:
-    #    lim2 = upperBound - cores[1] + 1
-    #else:
-    lim2 = 1
+    if lastInd >=2:
+        lim2 = upperBound - cores[1] + 1
+    else:
+        lim2 = 1
 
     if lastInd >=1 and primflag == 0:
         lim1 = upperBound - cores[0] + 1
@@ -538,7 +538,7 @@ def runExperiments(appList,coreNums):
                     coreList.append(range(4,4+coreNums[appList.index("prim")]))
                     apps.append("prim")
                 if any("blur" in s for s in appList):
-                    coreList.append(range(8+indices[appinds[0]],8+indices[appinds[0]]+coreNums[appList.index("blur")]))
+                    coreList.append(range(4+indices[appinds[0]],4+indices[appinds[0]]+coreNums[appList.index("blur")]))
                     apps.append("blur")
                 if any("sobel" in s for s in appList):
                     coreList.append(range(4+indices[appinds[1]],4+indices[appinds[1]]+coreNums[appList.index("sobel")]))
