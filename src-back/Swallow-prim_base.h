@@ -4,9 +4,9 @@
 #define MAZEWIDTH  16
 #define MAZELENGTH 16
 
-#define DIV_DEGREE_PRIM_X 4 // the degree to which the image is divided along each dimension (can only result in a square number of small images)
-#define DIV_DEGREE_PRIM_Y 4
-#define NUM_CHILDREN_PRIM 16
+#define DIV_DEGREE_PRIM_X 2 // the degree to which the image is divided along each dimension (can only result in a square number of small images)
+#define DIV_DEGREE_PRIM_Y 2
+#define NUM_CHILDREN_PRIM 4
 #define STARTDELAY 100000000
 #define CONTROL_INTERVAL 10
 
@@ -48,3 +48,9 @@ unsigned xc_check_maze(unsigned in_var,unsigned visited[][MAZEWIDTH/DIV_DEGREE_P
 unsigned xc_check_edge(unsigned rank, unsigned in_var,unsigned north,unsigned east,unsigned south,unsigned west);
 void delay_execution(unsigned delay);
 #endif /* SWALLOW_PRIM_H_ */
+
+#ifdef MAIN_FILE
+unsigned core_list[NUM_CHILDREN_PRIM];
+#else
+extern unsigned core_list[NUM_CHILDREN_PRIM];
+#endif

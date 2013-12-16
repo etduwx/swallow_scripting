@@ -12,12 +12,6 @@ def main():
 
 	#print "executing 0 \n"
 
-	if "xrun" not in tmp:
-		print "ho"
-		p0 = subprocess.Popen(["xrun","--io", "--id", "1", "swallow_etherboot.xe"],stderr=subprocess.PIPE)
-		sleep(5)
-
-
     #print "executing 1 \n"
 
 
@@ -30,7 +24,7 @@ def main():
 	output = p2.communicate(tftpargs)
 
 
-	sleep(3)
+	sleep(2)
 
 	p1.kill()
 

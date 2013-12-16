@@ -9,12 +9,14 @@
 #include "Swallow-nOS.h"
 #include "Swallow-nOS_initialFunctions.h"
 #include "Swallow-nOS_client.h"
-#include "Swallow-prim.h"
+
 #include "Swallow-prim-checks.h"
 #include "swallow_comms.h"
 #include "Power_Measure_Lib.h"
 #define NUM_VISITED_LIMIT 64
 #define SET_MODE 1
+
+#include "Swallow-prim.h"
 
 void startSync(chanend c_out)
 {
@@ -31,7 +33,7 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	channel myChannels[2*NUM_CHILDREN_SWALLOW];
 	unsigned printer[8];
 	double tempor;
-c_in :> foo;
+	c_in :> foo;
 
       num_done = 0;
 

@@ -9,20 +9,22 @@
 #include "Swallow-nOS.h"
 #include "Swallow-nOS_initialFunctions.h"
 #include "Swallow-nOS_client.h"
-#include "Swallow-prim.h"
 #include "Swallow-prim-checks.h"
 #include "swallow_comms.h"
 #include "Power_Measure_Lib.h"
+#define MAIN_FILE
 #define NUM_VISITED_LIMIT 64
 #define SET_MODE 1
 
-void startSync(chanend c_out)
+#include "Swallow-prim.h"
+
+/* void startSync(chanend c_out)
 {
 	unsigned foo;
 
 	foo = 42;
 	c_out <: foo;
-}
+} */
 
 //Prim's algorithm parameters
 void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
@@ -30,16 +32,21 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	unsigned foo, child_token,num_done;
 	channel myChannels[2*NUM_CHILDREN_PRIM];
 	unsigned printer[8];
+
 	double tempor;
-c_in :> foo;
+	c_in :> foo;
 
       num_done = 0;
+
+     //Insert core_list Here
+
 
       for(unsigned i=0;i<2*NUM_CHILDREN_PRIM;i++){
 	      myChannels[i] = client_allocateNewLocalChannel(i);
       }
       for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
-	      client_createThread(0,100,i,i+OFFSET);
+	    //  client_createThread(0,100,i,i+OFFSET);
+	      client_createThread(0,100,i,core_list[i]);
 	      channelListen(myChannels[i]);
       }
 
@@ -87,10 +94,14 @@ c_in :> foo;
 //      client_createThread(1,100,0,16);
 
       //control_channel <: (char) POWERMEASURE_START;
+
       while(num_done < NUM_CHILDREN_PRIM){
 	      getCompletedSignal(myChannels);
 	      num_done++;
       }
+
+
+
       //control_channel <: (char) POWERMEASURE_STOP;
       //control_channel <: (char) POWERMEASURE_READVALUES;
 
@@ -819,7 +830,9 @@ t :> time_end;
    printer[5] = sum2*counter2;
   //printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
   //printer[0] = printer[1];
-  //if(rank==3) printMany(1,printer);	
+
+  //Do print here
+
    time_end += 100000000;
    channelSendWord(parentCommunicationChannel,4);
   }

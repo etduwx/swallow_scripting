@@ -1,7 +1,6 @@
 #include "Swallow-helpers.h"
 #include "Swallow-nOS_client.h"
 #include "swallow_comms2.h"
-#include "Swallow-prim.h"
 #include "Swallow-prim-checks.h"
 #define THREAD_NO_1 1
 #define THREAD_NO_2 1
@@ -10,6 +9,7 @@
 #define THREAD_NUMERO_1 3
 #define THREAD_NUMERO_2 3
 
+#include "Swallow-prim.h"
 
 void prim_child_root(unsigned rank){
 	channel com_channel;
@@ -42,6 +42,12 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X);
 	unsigned walls_touched[(MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X)];
 
+	core_list[0] = 4;
+	core_list[1] = 8;
+	core_list[2] = 10;
+	core_list[3] = 3;
+
+
 	parent_chan = client_lookupParentChanend(parent_id, rank);
 	parentCommunicationChannel = client_connectNewLocalChannel(12, parent_chan);
 
@@ -52,9 +58,9 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	delay_execution(STARTDELAY);
 
 	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-		com_channel = client_lookupSpecificChanend(rank+OFFSET,THREAD_NO_1,15);
+		com_channel = client_lookupSpecificChanend(core_list[rank],THREAD_NO_1,15);
 	else
-		com_channel = client_lookupSpecificChanend(rank+OFFSET,THREAD_NO_2,15);
+		com_channel = client_lookupSpecificChanend(core_list[rank],THREAD_NO_2,15);
 
 	com_channel = client_connectNewLocalChannel(13,com_channel);
 
@@ -68,26 +74,26 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	if(pass_token != 1) asm("ecallt r0");
 
 	//printMany(3,os_debug);
-	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(rank - DIV_DEGREE_PRIM_X+OFFSET,THREAD_NO_1, 2);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(core_list[rank - DIV_DEGREE_PRIM_X],THREAD_NO_1, 2);
 	os_debug[1] = 51;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NO_1, 3);
+			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NO_1, 3);
 		else
-			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NO_2, 3);
+			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NO_2, 3);
 	}
 
 	os_debug[1] = 52;
 	//printMany(3,os_debug);
-	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(rank + DIV_DEGREE_PRIM_X+OFFSET,THREAD_NO_2, 0);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(core_list[rank + DIV_DEGREE_PRIM_X],THREAD_NO_2, 0);
 	os_debug[1] = 53;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != 0) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NO_1, 1);
+			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NO_1, 1);
 		else
-			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NO_2, 1);
+			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NO_2, 1);
 	}
 	os_debug[1] = 54;
 	//printMany(3,os_debug);
@@ -184,26 +190,26 @@ void set_up_consensus(unsigned parent_id, unsigned rank){
 	if(pass_token != 1) asm("ecallt r0");
 
 	//printMany(3,os_debug);
-	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(rank - DIV_DEGREE_PRIM_X+OFFSET,THREAD_NUMERO_1, 2);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(core_list[rank - DIV_DEGREE_PRIM_X],THREAD_NUMERO_1, 2);
 	os_debug[1] = 51;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NUMERO_1, 3);
+			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NUMERO_1, 3);
 		else
-			east_connection = client_lookupSpecificChanend(rank + OFFSET + 1,THREAD_NUMERO_2, 3);
+			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NUMERO_2, 3);
 	}
 
 	os_debug[1] = 52;
 	//printMany(3,os_debug);
-	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(rank + DIV_DEGREE_PRIM_X+OFFSET,THREAD_NUMERO_2, 0);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(core_list[rank + DIV_DEGREE_PRIM_X],THREAD_NUMERO_2, 0);
 	os_debug[1] = 53;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != 0) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NUMERO_1, 1);
+			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NUMERO_1, 1);
 		else
-			west_connection = client_lookupSpecificChanend(rank+OFFSET-1,THREAD_NUMERO_2, 1);
+			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NUMERO_2, 1);
 	}
 	os_debug[1] = 54;
 	//printMany(3,os_debug);
