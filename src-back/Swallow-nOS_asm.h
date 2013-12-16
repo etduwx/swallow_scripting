@@ -11,7 +11,7 @@
 #define nOS_LISTENCHANNEL 31
 #define MAXLOCALTHREADS 6   // max number of nonOS threads supported
 #define MAXTHREADCHANNELS 24 // max number of channels/thread supported
-#define THREADSTACKSIZE 2048 // number of words for each thread stack
+#define THREADSTACKSIZE 1900 // number of words for each thread stack
 
 enum nOS_action {nOS_allocateNewChannel_action, nOS_connectNewChannel_action, nOS_getChannelDest_action, nOS_updateChannelDest_action, nOS_releaseChannel_action, nOS_lookupChanend_action, nOS_createThread_action } ;
 typedef struct chanMapping {unsigned chanID; } chanMapping ;

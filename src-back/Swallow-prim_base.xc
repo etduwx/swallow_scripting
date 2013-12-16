@@ -34,7 +34,9 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	unsigned printer[8];
 
 	double tempor;
-	c_in :> foo;
+
+	//Chan in-outs here
+	
 
       num_done = 0;
 

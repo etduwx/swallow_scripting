@@ -21,6 +21,7 @@
 #include "Swallow-nOS_client.h"
 #include "Swallow-nOS_initialFunctions.h"
 #include "Swallow-prim.h"
+#include "blur.h"
 #include "Power_Measure_Lib.h"
 //#include "Swallow-sobel.h"
 
