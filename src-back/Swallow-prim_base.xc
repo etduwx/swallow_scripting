@@ -35,7 +35,7 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 
 	double tempor;
 
-	//Chan in-outs here
+	//Chan in here
 	
 
       num_done = 0;
@@ -92,6 +92,9 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
       for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	      child_token = channelReceiveWord(myChannels[i]);
       }
+
+
+      //Chan out here
 
 //      client_createThread(1,100,0,16);
 

@@ -87,7 +87,8 @@ def editPrimBody(coreList, typeOfEditing, threadNum,appList):
 
     create_match = "client_createThread(0,100,i,core_list[i]);"
     main_match = "void prim_main"
-    comms_match = "//Chan in-outs here"
+    comms_match_in = "//Chan in here"
+    comms_match_out = "//Chan out here"
     core_match = "num_done = 0"
     core_check_match = "//Insert core_list Here"
     print_thread_match = "//Do print here"
@@ -108,11 +109,13 @@ def editPrimBody(coreList, typeOfEditing, threadNum,appList):
             else:
                 arguments = "chanend c_in, unsigned shouldIRun"
             newFile.write("void prim_main(" + arguments + "){\n")
-        elif comms_match in line:
+        elif comms_match_in in line:
             newFile.write("\tc_in :> foo;\n")
+        elif comms_match_out in line:
             if (appList.index("prim") < (len(appList) - 1)):
-                newFile.write("\tc_out <: 42;\n")
-            newFile.write("\n")            
+                newFile.write("\tc_out <: 42;\n")  
+            else:
+                newFile.write(line)
         elif core_match in line:
             newFile.write(line)
             for i in xrange(len(coreList)):
