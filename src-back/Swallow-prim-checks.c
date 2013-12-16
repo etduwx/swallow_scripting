@@ -42,11 +42,6 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	unsigned num_walls = (MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X);
 	unsigned walls_touched[(MAZEWIDTH/DIV_DEGREE_PRIM_X+1) * (MAZELENGTH/DIV_DEGREE_PRIM_Y) + (MAZELENGTH/DIV_DEGREE_PRIM_Y + 1) * (MAZELENGTH/DIV_DEGREE_PRIM_X)];
 
-	core_list[0] = 4;
-	core_list[1] = 8;
-	core_list[2] = 10;
-	core_list[3] = 3;
-
 
 	parent_chan = client_lookupParentChanend(parent_id, rank);
 	parentCommunicationChannel = client_connectNewLocalChannel(12, parent_chan);
@@ -56,6 +51,13 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	os_debug[2] = 0;
 //	printMany(3,os_debug);
 	delay_execution(STARTDELAY);
+
+	//Insert core_list Here
+core_list[0] = 4;
+core_list[1] = 5;
+core_list[2] = 6;
+core_list[3] = 7;
+
 
 	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
 		com_channel = client_lookupSpecificChanend(core_list[rank],THREAD_NO_1,15);
@@ -107,12 +109,13 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 
 	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_connectNewLocalChannel(4, south_connection);
 	else south_connection = client_allocateNewLocalChannel(8);
+	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) east_connection = client_connectNewLocalChannel(7, east_connection);
+	else east_connection = client_allocateNewLocalChannel(11);
 	if(rank % DIV_DEGREE_PRIM_X != 0) west_connection = client_connectNewLocalChannel(5, west_connection);
 	else west_connection = client_allocateNewLocalChannel(9);
 	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_connectNewLocalChannel(6, north_connection);
 	else north_connection = client_allocateNewLocalChannel(10);
-	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) east_connection = client_connectNewLocalChannel(7, east_connection);
-	else east_connection = client_allocateNewLocalChannel(11);
+	
 
 	channels_lookup[1] = north_connection;
 	channels_lookup[2] = east_connection;

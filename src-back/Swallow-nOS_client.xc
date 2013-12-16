@@ -172,6 +172,18 @@ endpoint client_lookupSpecificChanend(unsigned tileIndex, unsigned thread_no, un
 // TODO: Add lookup remote chanend. Easy, just need to replace LOCALnOSCHANEND with the remote node's port.
 // the remainder should be the same.
 
+
+unsigned client_getThreadStatus(unsigned tileIndex)
+{
+	unsigned myCore = get_local_tile_id() ;    // returns node ID
+	unsigned myThread = get_logical_core_id() ;  // returns 0--7
+	unsigned myID = (myCore << 16) | myThread ;   // a unique ID for this thread
+	//return nOS_requestAction(LOCALnOSCHANEND, nOS_createThread_action, myID, startAddress, childRank) ;
+	
+	return nOS_requestAction((nodeIndexToId(tileIndex) | LOCALnOSCHANEND), nOS_getThreadStatus_action, myID, 0, 0) ;
+}
+
+
 unsigned get_address_p1()
 {
 	unsigned addr ;

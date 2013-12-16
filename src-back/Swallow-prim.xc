@@ -9,90 +9,110 @@
 #include "Swallow-nOS.h"
 #include "Swallow-nOS_initialFunctions.h"
 #include "Swallow-nOS_client.h"
-
 #include "Swallow-prim-checks.h"
 #include "swallow_comms.h"
 #include "Power_Measure_Lib.h"
+#define MAIN_FILE
 #define NUM_VISITED_LIMIT 64
 #define SET_MODE 1
 
 #include "Swallow-prim.h"
 
-void startSync(chanend c_out)
+/* void startSync(chanend c_out)
 {
 	unsigned foo;
 
 	foo = 42;
 	c_out <: foo;
-}
+} */
 
 //Prim's algorithm parameters
-void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
+void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel){
 
 	unsigned foo, child_token,num_done;
-	channel myChannels[2*NUM_CHILDREN_SWALLOW];
+	channel myChannels[2*NUM_CHILDREN_PRIM];
 	unsigned printer[8];
+
 	double tempor;
+
 	c_in :> foo;
+	c_out <: 42;
+
+	
 
       num_done = 0;
+core_list[0] = 4;
+core_list[1] = 5;
+core_list[2] = 6;
+core_list[3] = 7;
 
-      for(unsigned i=0;i<2*NUM_CHILDREN_SWALLOW;i++){
+     //Insert core_list Here
+
+
+      for(unsigned i=0;i<2*NUM_CHILDREN_PRIM;i++){
 	      myChannels[i] = client_allocateNewLocalChannel(i);
       }
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
-	      client_createThread(0,100,i,i+OFFSET);
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
+	    //  client_createThread(0,100,i,i+OFFSET);
+client_createThread(0,100,i,core_list[i]);
 	      channelListen(myChannels[i]);
       }
 
       delay_execution(STARTDELAY);
       
       
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	      channelSendWord(myChannels[i],1);
 	      child_token = channelReceiveWord(myChannels[i]);
 	      if(child_token != 1) asm("ecallt r0");
       }	
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	      channelSendWord(myChannels[i],2);
-	      //channelListen(myChannels[i+NUM_CHILDREN_SWALLOW]);
+	      //channelListen(myChannels[i+NUM_CHILDREN_PRIM]);
       }
 
       //delay_execution(STARTDELAY);
 		//client_createThread(1,100,0,OFFSET);
 
-     /* for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
-	      child_token = channelReceiveWord(myChannels[i+NUM_CHILDREN_SWALLOW]);
+     /* for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
+	      child_token = channelReceiveWord(myChannels[i+NUM_CHILDREN_PRIM]);
 	      if(child_token != 5) asm("ecallt r0");
       } 
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	      //	printOne(i+10);
-	      channelSendWord(myChannels[i+NUM_CHILDREN_SWALLOW],1);
-	      child_token = channelReceiveWord(myChannels[i+NUM_CHILDREN_SWALLOW]);
+	      channelSendWord(myChannels[i+NUM_CHILDREN_PRIM],1);
+	      child_token = channelReceiveWord(myChannels[i+NUM_CHILDREN_PRIM]);
 	      if(child_token != 1) asm("ecallt r0");
       }	
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
-	      channelSendWord(myChannels[i+NUM_CHILDREN_SWALLOW],2);
-	      child_token = channelReceiveWord(myChannels[i+NUM_CHILDREN_SWALLOW]);
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
+	      channelSendWord(myChannels[i+NUM_CHILDREN_PRIM],2);
+	      child_token = channelReceiveWord(myChannels[i+NUM_CHILDREN_PRIM]);
       }
 
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
-	      channelSendWord(myChannels[i+NUM_CHILDREN_SWALLOW],2);
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
+	      channelSendWord(myChannels[i+NUM_CHILDREN_PRIM],2);
       }	*/
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	      channelSendWord(myChannels[i],3);
       }
-      for(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++){
+      for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	      child_token = channelReceiveWord(myChannels[i]);
       }
 
 //      client_createThread(1,100,0,16);
 
       //control_channel <: (char) POWERMEASURE_START;
-      while(num_done < NUM_CHILDREN_SWALLOW){
+
+      while(num_done < NUM_CHILDREN_PRIM){
 	      getCompletedSignal(myChannels);
 	      num_done++;
       }
+
+
+
+	printer[0] = client_getThreadStatus(4);
+	printMany(1,printer);
+
       //control_channel <: (char) POWERMEASURE_STOP;
       //control_channel <: (char) POWERMEASURE_READVALUES;
 
@@ -143,7 +163,7 @@ void xc_getCompletedSignal(chanend child_channels[]){
 	unsigned hi;
 
 	select{
-		case(unsigned i=0;i<NUM_CHILDREN_SWALLOW;i++)
+		case(unsigned i=0;i<NUM_CHILDREN_PRIM;i++)
 			getValue(child_channels[i],hi);
 
 	}
@@ -819,9 +839,11 @@ t :> time_end;
    printer[3] = sum*counter;
    printer[4] = 0xbadbeef;
    printer[5] = sum2*counter2;
-  //printer[0] = 1000*double(printer[5])/double(printer[3]);
-  printer[0] = printer[1];
-  if(rank==0) printMany(1,printer);	
+  //printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
+  //printer[0] = printer[1];
+
+  //Do print here
+
    time_end += 100000000;
    channelSendWord(parentCommunicationChannel,4);
   }

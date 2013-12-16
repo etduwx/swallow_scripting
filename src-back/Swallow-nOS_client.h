@@ -27,4 +27,5 @@ void client_releaseLocalChannel(unsigned channelIndex) ;
 endpoint client_lookupLocalChanend(unsigned channelIndex) ;
 endpoint client_lookupParentChanend(unsigned parentID, unsigned channelIndex) ;
 endpoint client_lookupSpecificChanend(unsigned tileID, unsigned thread_no, unsigned channelIndex);
+unsigned client_getThreadStatus(unsigned tileIndex) ;
 #endif /* SWALLOW_NOS_CLIENT_H_ */

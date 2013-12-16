@@ -11,9 +11,9 @@
 #define nOS_LISTENCHANNEL 31
 #define MAXLOCALTHREADS 6   // max number of nonOS threads supported
 #define MAXTHREADCHANNELS 24 // max number of channels/thread supported
-#define THREADSTACKSIZE 1900 // number of words for each thread stack
+#define THREADSTACKSIZE 1900// number of words for each thread stack
 
-enum nOS_action {nOS_allocateNewChannel_action, nOS_connectNewChannel_action, nOS_getChannelDest_action, nOS_updateChannelDest_action, nOS_releaseChannel_action, nOS_lookupChanend_action, nOS_createThread_action } ;
+enum nOS_action {nOS_allocateNewChannel_action, nOS_connectNewChannel_action, nOS_getChannelDest_action, nOS_updateChannelDest_action, nOS_releaseChannel_action, nOS_lookupChanend_action, nOS_createThread_action, nOS_getThreadStatus_action } ;
 typedef struct chanMapping {unsigned chanID; } chanMapping ;
 
 unsigned nOS_createThread(unsigned parentID, unsigned startAddress, unsigned childRank, unsigned stacks[MAXLOCALTHREADS][THREADSTACKSIZE]) ;
@@ -29,6 +29,10 @@ void nOS_addEventHandler(channel c, unsigned handler) ;
 void nOS_disableEvent(channel c) ;
 void nOS_setChannelDest(channel c, unsigned dest) ;
 void printManyC(channel printChannel, unsigned length, unsigned data[]) ;
+unsigned GetLock() ;
+void ClaimLock(unsigned l) ;
+void FreeLock(unsigned l) ;
+void FreerLock(unsigned l) ;
 
 #else
 void nOS_listenForAction(unsigned c, unsigned stacks[MAXLOCALTHREADS][THREADSTACKSIZE], chanMapping chanMap[MAXLOCALTHREADS][MAXTHREADCHANNELS]) ;
@@ -37,6 +41,11 @@ void nOS_addEventHandler(unsigned c, unsigned handler) ;
 void nOS_disableEvent(unsigned c) ;
 void nOS_setChannelDest(unsigned c, unsigned dest) ;
 void printManyC(unsigned printChannel, unsigned length, unsigned data[]) ;
+unsigned GetLock() ;
+void ClaimLock(unsigned l) ;
+void FreeLock(unsigned l) ;
+void FreerLock(unsigned l) ;
+
 
 #endif
 

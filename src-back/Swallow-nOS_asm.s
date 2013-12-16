@@ -327,6 +327,15 @@ nOS_createThread:
 	# now all there is to do is to run the thread!
 	start t[r3]
 
+	# increment no of threads in existence
+	ldw r0, dp[noUserThreadsLock]
+	bl ClaimLock
+	ldw r1, dp[noUserThreads]
+	add r1, r1, 0x1
+	stw r1, dp[noUserThreads]
+	bl FreeLock
+
+
  	# move new thread's ID in format {NODE_16, INDEX_16}to return register
 	shr r1, r3, 0x8  # first grab the index
 	ldc r0, 0x000000ff
@@ -359,9 +368,76 @@ nOS_createThread:
 
 # free the running thread. Nice and simple!
 nOS_threadFree:
+	ldw r0, dp[noUserThreadsLock]
+	bl ClaimLock
+	ldw r1, dp[noUserThreads]
+	sub r1, r1, 0x1
+	stw r1, dp[noUserThreads]
+	bl FreeLock
 	freet
 
 .cc_bottom nOS_threadFree.func
+
+
+#-----
+.globl nOS_getThreadStatus.nstackwords
+.globl nOS_getThreadStatus.maxthreads
+.globl nOS_getThreadStatus.maxtimers
+.globl nOS_getThreadStatus.maxchanends
+
+.linkset nOS_getThreadStatus.nstackwords, 0
+.linkset nOS_getThreadStatus.maxchanends, 0
+.linkset nOS_getThreadStatus.maxtimers, 0
+.linkset nOS_getThreadStatus.maxthreads, 0
+
+.globl nOS_getThreadStatus
+.cc_top nOS_getThreadStatus.func, nOS_getThreadStatus
+.text
+
+# get running thread status
+# takes no arguments
+# returns with PS_DBG_RUN_CTRL in r0
+# and a bitmap of waiting threads in r1 ('1' = WAITING)
+
+nOS_getThreadStatus:
+
+#  CURRENTLY DOESN'T WORK
+
+# get the PS_DBG_RUN_CTRL register
+# "Determine which threads are active in when not in debug mode."
+#	ldc r0, 0x180b
+#	get r0, ps[r0]
+
+# now, go through all threads and determine if they are in the 'WAITING' state
+#	ldc r1, 0x0
+	# r2 tracks thread ID to be inspected
+#	ldc r2, 0x8
+
+	# switch to DEBUG mode (thread 0 had better be running this code)
+#	dcall 
+getThreadStatusLoop:
+#	sub r2, r2, 0x1
+
+#	ldc r3, dtid
+#	set ps[r3], r2
+#	ldc r3, dtreg
+#	ldc r11, sr
+#	set ps[r3], r11
+
+# extract the 'WAITING' bit (into r11 implicitly but add explicitly)
+#	dgetreg r11
+#	ldc r3, 0x40
+#	and r11, r11, r3
+#	shr r11, r11, 0x6
+#	shl r11, r11, r2
+#	or r1, r1, r11
+#	bt r2, getThreadStatusLoop
+
+	# return from debug mode
+#	dret
+
+#	retsp 0
+.cc_bottom nOS_getThreadStatus.func
 
 
 #------------------
@@ -527,8 +603,8 @@ nOS_getEventID:
 
 
 # From http://www.xmos.com/discuss/viewtopic.php?f=7&t=383
-# void GetLock()
-.extern GetRLock
+# unsigned GetLock()
+.extern GetLock
 .globl GetLock.nstackwords
 .linkset GetLock.nstackwords, 0
 .globl GetLock

@@ -14,8 +14,15 @@
 #define LOCALnOSCHANEND 0x1f02
 
 
+void startSync(chanend c_out)
+{
+	unsigned foo;
+	foo = 20;
+	c_out <: foo;
+}
 
-void piping_main(unsigned parent_id, unsigned rank){
+
+void blur_main(chanend c_in, unsigned shouldIRun){
 	double tempor;
 	unsigned time1,time2;
 	timer t;
@@ -29,16 +36,18 @@ void piping_main(unsigned parent_id, unsigned rank){
 	unsigned i = 0;
 	unsigned j = 0;
 	channel doneSignal;
-	
+	unsigned coreList[24];
+
+	c_in :> foo;
 
 
 	parentch = client_allocateNewLocalChannel(0);
 	doneSignal = client_allocateNewLocalChannel(1);
-	client_createThread(2, 100, 0, 4);
+client_createThread(1, 100, 0,8);
 
 	channelListen(parentch);
 	t :> time1;
-//	control_channel <: (char) POWERMEASURE_START;
+	//control_channel <: (char) POWERMEASURE_START;
 	
 		for(i = 0; i < IMG_WIDTH; i++){
 			for(j = 0; j < IMG_LENGTH; j++){
@@ -61,42 +70,45 @@ void piping_main(unsigned parent_id, unsigned rank){
 		}
 	}
 	
-
-	printer[0] = doneSignal;
-	//printMany(1,printer);
 	channelListen(doneSignal);
 	foo = channelReceiveWord(doneSignal);
-	t :> time2;
-	printer[0] = 0xdeadbeef;
-	printer[1] = time2-time1;
-	printMany(2,printer);
-/*	if(foo==42){
-	printer[0] = time2-time1;
-	printMany(1,printer);
-//	control_channel <: (char) POWERMEASURE_STOP;
-//	control_channel <: (char) POWERMEASURE_READVALUES;
 	
-//	control_channel :> printer[0];
+	t :> time2;
+	printer[0] = time2-time1;
+	//if(foo==42) printMany(1,printer);
+	
+	if(foo==42){
+		//control_channel <: (char) POWERMEASURE_STOP;
+		//control_channel <: (char) POWERMEASURE_READVALUES;
+	
+		//control_channel :> printer[0];
 
-	for(unsigned k =1; k < 8; k++){
-		control_channel :> tempor;
+		for(unsigned k =1; k < 8; k++){
+			//control_channel :> tempor;
 
-		printer[k] = (tempor*1000/(double) printer[0]) ;
+			printer[k] = (tempor*1000/(double) printer[0]) ;
 		}
-	printMany(8, printer);
+		//printMany(8, printer);
 		
-} */
+	}
 }
 
-void piping_child(unsigned parent_id, unsigned rank){
+void blur_child(unsigned parent_id, unsigned rank){
 	unsigned printer[IMG_LENGTH];
 	double tempor;
+	double Commtime;
+		double Comptime;
+		unsigned time1,time2,time_start,time_end;
+		
+		timer t;
+		
 	if(rank < STAGES_OF_PIPELINE -1){
 		unsigned count = 0;
 		channel childch;
 		unsigned filter[XDIV][YDIV];
-		unsigned time1,time2;
-		timer t;
+		
+		unsigned nextCore;
+		
 		unsigned doneSignal=parent_id;	
 		channel parentCommunicationChannel;
 			unsigned element[XDIV][YDIV];
@@ -106,30 +118,35 @@ void piping_child(unsigned parent_id, unsigned rank){
 			unsigned G = 0;
 			unsigned B = 0;
 			unsigned processedPixel = 0;
-
-
+			
+Commtime = 0;
+Comptime = 0;
 
 		parentCommunicationChannel = client_lookupParentChanend(parent_id, rank);
 		parentCommunicationChannel = client_connectNewLocalChannel(1, parentCommunicationChannel);
-	printer[0]=0xdeadface;
 
-	//printMany(1,printer);
+
+		//Put Switch Statement Under Here
+switch(rank){
+case 0: nextCore = 9;
+break; 
+case 1: nextCore = 10;
+break; 
+case 2: nextCore = 11;
+break; 
+}
+
 
 		childch = client_allocateNewLocalChannel(rank+1);
-        	client_createThread(2, 100, rank + 1, 5 + rank);
+client_createThread(1, 100, rank + 1, nextCore);
 
         	channelListen(childch);
 		if(rank!=0) doneSignal = channelReceiveWord(parentCommunicationChannel);
 		channelSendWord(childch,doneSignal);
 
+		t :> time_start;
 
 		while(count < XFACTOR * YFACTOR){
-			printer[0] = 0xbadc0de;
-			printer[1] = rank;
-			printer[2] = count;
-			//printMany(3,printer);
-	
-
 			for(i = 0; i < YDIV; i++){
 				for(j = 0; j < XDIV; j++){
 					if(i == 0 || j == 0 || i == XDIV || j == YDIV){
@@ -140,6 +157,7 @@ void piping_child(unsigned parent_id, unsigned rank){
 					}
 				}
 			}
+
 			t :> time1;
 			for(i = 0; i < YDIV; i++){
 				for(j = 0; j < XDIV; j++){
@@ -147,12 +165,9 @@ void piping_child(unsigned parent_id, unsigned rank){
 				}
 			}
 			t :> time2;
-
-	
-			printer[2] = 0xbabeface;
-			printer[0] = time2-time1;
-			printer[1] = 0;
-	//		printMany(3,printer);
+		
+			Commtime += time2 - time1;
+			
 
 			t :> time1;
 			for(i = 0; i < YDIV; i++){
@@ -165,16 +180,15 @@ void piping_child(unsigned parent_id, unsigned rank){
 					B = B / 2;
 					element[i][j]  = (R << 16) | (B << 8) | (G);
 					element[i][j] = element[i][j] * filter[i][j];
-*/				for(unsigned x=0;x<100;x++){
-					element[i][j] += 1;
-}
+*/					for(unsigned x=0;x<100;x++){
+						element[i][j] += 1;
+					}
 				}
 			}
 			t :> time2;
-
-			printer[0] = time2-time1;
-			printer[1] = 1;
-	//		printMany(2,printer);			
+			
+			Comptime += time2-time1;
+			
 
 			t:> time1;
 			for(i = 0; i < YDIV; i++){
@@ -184,13 +198,20 @@ void piping_child(unsigned parent_id, unsigned rank){
 			}
 			t :> time2;
 
-			printer[0] = time2-time1;
-			printer[1] = 2;
-	//		printMany(2,printer);
+			
+			Commtime += time2 - time1;
+			
 			count++;
 		}
 
+		
+		
+
+		
+
 		client_releaseLocalChannel(rank+1);
+
+		t :> time_end;
 	}
 
 	else{
@@ -207,15 +228,15 @@ void piping_child(unsigned parent_id, unsigned rank){
 		parentCommunicationChannel = client_lookupParentChanend(parent_id, rank);
         	parentCommunicationChannel = client_connectNewLocalChannel(1, parentCommunicationChannel);
 		doneSignal = channelReceiveWord(parentCommunicationChannel);
+Commtime = 0;
+Comptime = 0;
+		t :> time_start;
 
-//		printer[0] =  0xdeadbeef;
-//		printMany(1,printer);
+		t :> time1;
 	        for(x = 0; x < (XFACTOR * YFACTOR); x++){
         	        for(i = 0; i < YDIV; i++){
                 	        for(j = 0; j < XDIV; j++){
                         	        result[i+YDIV*XF][j+XDIV*YF] =  channelReceiveWord(parentCommunicationChannel);
-//					printer[0] =  0xfeedbeef;
-//					printMany(1,printer);
                         	}
                 	}
                	 	YF++;
@@ -227,44 +248,46 @@ void piping_child(unsigned parent_id, unsigned rank){
                   	        XF++;
                 	}
         	}
+
+        t :> time2;
+
+        Commtime += time2-time1;
+
+        t:> time1;
+
 		for(i = 0; i < IMG_WIDTH; i++){
 			for(j = 0; j < IMG_LENGTH; j++){
 				printer[j] = result[i][j];
 			}
 			//printMany(IMG_LENGTH,printer);
 		}
+
+		t :> time2;
+
+		Comptime += time2-time1;
+
+		t :> time1;
 		rootCommunicationChannel = client_lookupParentChanend(doneSignal,1);
 		printer[0] = rootCommunicationChannel;
 		//printMany(1,printer);
 		rootCommunicationChannel = client_connectNewLocalChannel(2,rootCommunicationChannel);
 
 channelSendWord(rootCommunicationChannel,42);
+	t :> time2;
+
+	Commtime += time2-time1;
+	
+
 	client_releaseLocalChannel(2);
+
+	t :> time_end;
 	}
 	
 
+	//printer[0] = 1000*(Comptime/(Comptime + Commtime));
+	printer[0] = time_end - time_start;
+
+	//Insert Printing Here
+if(rank==3) printMany(1,printer);
+
 }
-
-
-
-void xc_printPower(chanend powerchan)
-{
-	double tempor;
-	unsigned printer[8];
-
-	asm("getd %0, res[%1]" : "=r"(printer[0]) : "r"(powerchan)); 
-	printMany(1,printer);
-	powerchan <: (char) POWERMEASURE_STOP;
-	powerchan <: (char) POWERMEASURE_READVALUES;
-	
-	powerchan :> printer[0];
-
-	for(unsigned k =1; k < 8; k++){
-		powerchan :> tempor;
-
-		printer[k] = (tempor*1000/(double) printer[0]) ;
-		}
-	printMany(8, printer);
-		
-	}	
-

@@ -3,13 +3,14 @@
 #include <print.h>
 #include <math.h>
 #include <stdlib.h> // for exit()
+
 #include "Swallow-helpers.h"
 #include "Swallow-nOS_asm.h"
 #include "Swallow-nOS.h"
 #include "Swallow-nOS_client.h"
 #include "Swallow-nOS_initialFunctions.h"
 #include "Swallow-sobel.h"
-#define LOCALPRINTCHANEND 0x1d02
+
 #define LOCALnOSCHANEND 0x1f02 // hard-coded for core[0] only. TODO: generalise
 
 // AEC Code
@@ -24,6 +25,9 @@
 
 
 out port even_leds = XS1_PORT_4F;
+
+unsigned noUserThreads = 0 ;
+unsigned noUserThreadsLock = 0 ;
 
 void enableAEC (unsigned standbyClockDivider)
 {
@@ -146,6 +150,13 @@ unsigned nOS_doAction(unsigned action, unsigned arg1, unsigned arg2, unsigned ar
 		arg2 = getStartAddress(arg2) ;
 		result = nOS_createThread(arg1, arg2, arg3, stacks) ;
 		return result ;
+
+	// lookup how many threads are currently tasked to this core
+	// and their status
+	// < takes no args >
+	// returns { 00000000, 8-bit flags - running or blocked, no threads (16 bits)
+	case nOS_getThreadStatus_action :
+		return noUserThreads ;
 	}
 }
 
@@ -198,6 +209,8 @@ void nOS_start(chanend c_in,chanend c_out, unsigned initialFreqDivider)
 	enableAEC(STANDBY_CLOCK_DIVIDER) ;
 
 
+
+	noUserThreadsLock = GetLock() ;
 	// synchronisation needed since messages sent before the local channel is acquired may be lost
 
 
@@ -242,6 +255,7 @@ void nOS_start(chanend c_in,chanend c_out, unsigned initialFreqDivider)
 	//	nOS_createThread(getStartAddress(p_begin3)) ;
 //		break;
 	}
+	FreerLock(noUserThreadsLock) ;
 
 }
 
