@@ -9,24 +9,25 @@
 #include "Swallow-nOS_client.h"
 #include "Swallow-sobel-select.h"
 #include "Swallow-prim-checks.h"
-#include "Swallow-sobel.h"
+#include "Power_Measure_Lib.h"
+
 #include <print.h>
 #include "leds.h"
 //#include "Swallow-sobel-streaming.h"
-
+#define MAIN_FILE_SOBEL
 #define LOCALnOSCHANEND 0x1f02 // hard-coded for core[0] only. TODO: generalise
-//#define IMG_WIDTH 4
-//#define IMG_LENGTH 4
-//#define DIV_DEGREE_X 1 // the degree to which the image is divided along each dimension (can only result in a square number of small images)
-//#define DIV_DEGREE_Y 1
-//#define NUM_CHILDREN 1 //num_children must equal DIV_DEGREE^2
+//#define IMG_WIDTH_SOBEL 4
+//#define IMG_LENGTH_SOBEL 4
+//#define DIV_DEGREE_X_SOBEL 1 // the degree to which the image is divided along each dimension (can only result in a square number of small images)
+//#define DIV_DEGREE_Y_SOBEL 1
+//#define NUM_CHILDREN_SOBEL 1 //NUM_CHILDREN_SOBEL must equal DIV_DEGREE^2
 #define THRESHOLD 30 // threshold for gradient to be labeled as an edge
 //#define ETHERNETCHANINDEX 29
 //#define STARTDELAY 625000000 //625 million reference clock cycles of start delay (5 secs)
 
 //out port even_leds = XS1_PORT_4F;
 
-
+#include "Swallow-sobel.h"
 static inline void printOne(unsigned value) 
 {
 	unsigned data[1];
@@ -35,29 +36,39 @@ static inline void printOne(unsigned value)
 	//printMany(1,data);
 
 }
-void sobel_main(unsigned parent_id,unsigned rank)
+void sobel_main(chanend c_in, unsigned shouldIRun){
 {
 	timer t;
 	unsigned time1,time2;
 
 	unsigned myID;
-  //  unsigned IMG[IMG_WIDTH][IMG_LENGTH];
-   //  unsigned processed_image[IMG_WIDTH+2][IMG_LENGTH+2];
+  //  unsigned IMG[IMG_WIDTH_SOBEL][IMG_LENGTH_SOBEL];
+   //  unsigned processed_image[IMG_WIDTH_SOBEL+2][IMG_LENGTH_SOBEL+2];
 	unsigned processed_pixel;
-    //unsigned receive_buffer[IMG_WIDTH/DIV_DEGREE_X + 4];
+    //unsigned receive_buffer[IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL + 4];
     unsigned ind1x,ind2x,ind1y,ind2y;
     unsigned childStart, childStack;
     unsigned num_collected;
-    const unsigned subimg_width = IMG_WIDTH/DIV_DEGREE_X + 4;
-    const unsigned subimg_length = IMG_LENGTH/DIV_DEGREE_Y + 4;
+    double tempor;
+    const unsigned subIMG_WIDTH_SOBEL = IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL + 4;
+    const unsigned subIMG_LENGTH_SOBEL = IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL + 4;
     //channel input_channel;
 
-    channel myChannels[NUM_CHILDREN];
-	unsigned printer[2];
+	unsigned foo;
+    channel myChannels[NUM_CHILDREN_SOBEL];
+	unsigned printer[8];
 
 //start delay
 
+	c_in :> foo;
+//Chan in-outs here
 
+
+//Insert core_list Here
+core_list_sobel[0] = 10;
+core_list_sobel[1] = 11;
+core_list_sobel[2] = 12;
+core_list_sobel[3] = 13;
 
     myID = get_logical_core_id();
 
@@ -65,9 +76,9 @@ void sobel_main(unsigned parent_id,unsigned rank)
     get_stackSize(sobel_child, childStack) ;
 
 /*
-    for(int i=0;i<IMG_WIDTH;i++)
+    for(int i=0;i<IMG_WIDTH_SOBEL;i++)
     {
-  	  for(int j=0;j<IMG_LENGTH;j++)
+  	  for(int j=0;j<IMG_LENGTH_SOBEL;j++)
   	  {
   		  if(j!=2)
   		  	  IMG[i][j] = 0;
@@ -78,11 +89,15 @@ void sobel_main(unsigned parent_id,unsigned rank)
 */
     //input_channel = getSpecificLocalChannel(ETHERNETCHANINDEX);
 
+
+
+    //control_channel <: (char) POWERMEASURE_START;
+
     //start children threads
-    for(unsigned i = 0; i <NUM_CHILDREN; i++){
+    for(unsigned i = 0; i <NUM_CHILDREN_SOBEL; i++){
     	myChannels[i] = client_allocateNewLocalChannel(i); // push into operating system
     	//start children threads
-    	client_createThread(2, childStack,i,OFFSET+i) ;
+client_createThread(1,100,i,core_list_sobel[i]);
 //	printintln(i);
     	channelListen(myChannels[i]) ;
 	//printstrln("");
@@ -93,35 +108,35 @@ void sobel_main(unsigned parent_id,unsigned rank)
     t :> time1;
    // xscope_register(0);
    // xscope_config_io(XSCOPE_IO_BASIC);
- /*   for(int i = 0; i <NUM_CHILDREN; i++){
+ /*   for(int i = 0; i <NUM_CHILDREN_SOBEL; i++){
        	//split and send the image parts to the cores
-    	ind1x = (i % DIV_DEGREE_X) * IMG_WIDTH/DIV_DEGREE_X;
-    	ind2x = ind1x + (IMG_WIDTH/DIV_DEGREE_X) - 1;
-    	ind1y = (i / DIV_DEGREE_X) * IMG_LENGTH/DIV_DEGREE_Y;
-    	ind2y = ind1y + (IMG_LENGTH/DIV_DEGREE_Y) - 1;
+    	ind1x = (i % DIV_DEGREE_X_SOBEL) * IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL;
+    	ind2x = ind1x + (IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL) - 1;
+    	ind1y = (i / DIV_DEGREE_X_SOBEL) * IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL;
+    	ind2y = ind1y + (IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL) - 1;
 
-    	if((i % DIV_DEGREE_X) == 0){
-    		for(int q=0;q<2*subimg_length;q++){
+    	if((i % DIV_DEGREE_X_SOBEL) == 0){
+    		for(int q=0;q<2*subIMG_LENGTH_SOBEL;q++){
     			channelSendWord(myChannels[i],0);
     		}
     	}
     	else{
     		ind1x = ind1x-2;
     	}
-    	if((i % DIV_DEGREE_X) != DIV_DEGREE_X - 1){
+    	if((i % DIV_DEGREE_X_SOBEL) != DIV_DEGREE_X_SOBEL - 1){
     	    		ind2x = ind2x + 2;
     	    	}
 
-    	if((i / DIV_DEGREE_X) != 0){
+    	if((i / DIV_DEGREE_X_SOBEL) != 0){
     	    			ind1y = ind1y-2;
     	    		}
-    	if((i / DIV_DEGREE_X) != DIV_DEGREE_Y - 1){
+    	if((i / DIV_DEGREE_X_SOBEL) != DIV_DEGREE_Y_SOBEL - 1){
         			ind2y = ind2y + 2;
         		}
 
-    //	for (int j=0; j < subimg_width; j++){
+    //	for (int j=0; j < subIMG_WIDTH_SOBEL; j++){
     //		receive_length = c_coreReceiveWords(input_channel,receive_buffer);
-    		//if(receive_length != subimg_length){
+    		//if(receive_length != subIMG_LENGTH_SOBEL){
     			// throw_exception();
     		//}
     //	    		for(int k = 0; k < receive_length; k ++){
@@ -131,7 +146,7 @@ void sobel_main(unsigned parent_id,unsigned rank)
   //  } 
 
     	for (int j = ind1x; j <= ind2x; j ++){
-    		if((i / DIV_DEGREE_X) == 0){
+    		if((i / DIV_DEGREE_X_SOBEL) == 0){
     			channelSendWord(myChannels[i],0);
     			channelSendWord(myChannels[i],0);
     		}
@@ -140,25 +155,25 @@ void sobel_main(unsigned parent_id,unsigned rank)
     		channelSendWord(myChannels[i],IMG[j][k]);
     		}
 
-    		if((i / DIV_DEGREE_X) == DIV_DEGREE_Y - 1){
+    		if((i / DIV_DEGREE_X_SOBEL) == DIV_DEGREE_Y_SOBEL - 1){
     		    channelSendWord(myChannels[i],0);
     		    channelSendWord(myChannels[i],0);
     		    		}
     	}
 
-    	if((i % DIV_DEGREE_X) == DIV_DEGREE_X - 1){
-    	    		for(int q=0;q<2*subimg_length;q++){
+    	if((i % DIV_DEGREE_X_SOBEL) == DIV_DEGREE_X_SOBEL - 1){
+    	    		for(int q=0;q<2*subIMG_LENGTH_SOBEL;q++){
     	    			channelSendWord(myChannels[i],0);
     	    		}
     	    	}
     	} */
 
 
-for(int x=0;x<NUM_CHILDREN;x++)
+for(int x=0;x<NUM_CHILDREN_SOBEL;x++)
 {
-	for(int i=0;i<subimg_width;i++)
+	for(int i=0;i<subIMG_WIDTH_SOBEL;i++)
 	{
-		for(int j=0;j<subimg_length;j++)
+		for(int j=0;j<subIMG_LENGTH_SOBEL;j++)
 		{
 			if(j==2)
 				channelSendWord(myChannels[x],255);
@@ -173,25 +188,33 @@ for(int x=0;x<NUM_CHILDREN;x++)
 
 t :> time2;
 
-printer[0] = 0xbabecafe;
-printer[1] = time2-time1;
-printMany(2,printer);
+	//control_channel <: (char) POWERMEASURE_STOP;
+		//control_channel <: (char) POWERMEASURE_READVALUES;
+	
+		//control_channel :> printer[0];
+
+		for(unsigned k =1; k < 8; k++){
+			//control_channel :> tempor;
+
+			printer[k] = (tempor*1000/(double) printer[0]) ;
+		}
+		//printMany(8, printer);
 
 
 
 
-    /* while(num_collected<NUM_CHILDREN)
+    /* while(num_collected<NUM_CHILDREN_SOBEL)
     {
     	sobelSelect(myChannels,processed_image);
     	num_collected++;
     } */
 
-    for(int i=0;i<NUM_CHILDREN;i++)
+    for(int i=0;i<NUM_CHILDREN_SOBEL;i++)
        {
-       	ind1x = (i % DIV_DEGREE_X) * IMG_WIDTH/DIV_DEGREE_X;
-       	ind2x = ind1x + (IMG_WIDTH/DIV_DEGREE_X) + 1;
-       	ind1y = (i / DIV_DEGREE_Y) * IMG_LENGTH/DIV_DEGREE_Y;
-       	ind2y = ind1y + (IMG_LENGTH/DIV_DEGREE_Y) + 1;
+       	ind1x = (i % DIV_DEGREE_X_SOBEL) * IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL;
+       	ind2x = ind1x + (IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL) + 1;
+       	ind1y = (i / DIV_DEGREE_Y_SOBEL) * IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL;
+       	ind2y = ind1y + (IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL) + 1;
 
 //		printstr("\n");
   //      	printint(i);
@@ -211,10 +234,10 @@ printMany(2,printer);
     //release channels
 
 /*
-  for(int i=0;i<IMG_WIDTH+2;i++)
+  for(int i=0;i<IMG_WIDTH_SOBEL+2;i++)
   {
 	  printstr("\n");
-	  for(int j=0;j<IMG_LENGTH+2;j++)
+	  for(int j=0;j<IMG_LENGTH_SOBEL+2;j++)
 	  {
 		  printint(processed_image[i][j]);
 	  }
@@ -227,10 +250,11 @@ printMany(2,printer);
 //	printstr("\n");
 //	printer[0] = time2-time;
 //	printMany(1,printer);
+
+}
 }
 
-
-select getIMGComponents(chanend listenChannel, unsigned processed_image[][IMG_LENGTH+2],unsigned ind1x,unsigned ind2x,unsigned ind1y, unsigned ind2y,int j)
+select getIMGComponents(chanend listenChannel, unsigned processed_image[][IMG_LENGTH_SOBEL+2],unsigned ind1x,unsigned ind2x,unsigned ind1y, unsigned ind2y,int j)
 {
 	case listenChannel :> processed_image[ind1x][ind1y]:
 		j++;
@@ -245,44 +269,45 @@ select getIMGComponents(chanend listenChannel, unsigned processed_image[][IMG_LE
 		break;
 }
 
-void xc_sobelSelect(chanend myChannels[],unsigned processed_image[][IMG_LENGTH+2])
+void xc_sobelSelect(chanend myChannels[],unsigned processed_image[][IMG_LENGTH_SOBEL+2])
 {
-	unsigned ind1x[NUM_CHILDREN];
-	unsigned ind2x[NUM_CHILDREN];
-	unsigned ind1y[NUM_CHILDREN];
-	unsigned ind2y[NUM_CHILDREN];
+	unsigned ind1x[NUM_CHILDREN_SOBEL];
+	unsigned ind2x[NUM_CHILDREN_SOBEL];
+	unsigned ind1y[NUM_CHILDREN_SOBEL];
+	unsigned ind2y[NUM_CHILDREN_SOBEL];
 	unsigned num_collected;
 
 	num_collected = 0;
 
-	for(int i=0;i<NUM_CHILDREN;i++)
+	for(int i=0;i<NUM_CHILDREN_SOBEL;i++)
 	{
-			ind1x[i] = (i % DIV_DEGREE_X) * IMG_WIDTH/DIV_DEGREE_X;
-	    	ind2x[i] = ind1x[i] + (IMG_WIDTH/DIV_DEGREE_X) + 1;
-	    	ind1y[i] = (i / DIV_DEGREE_X) * IMG_LENGTH/DIV_DEGREE_Y;
-	    	ind2y[i] = ind1y[i] + (IMG_LENGTH/DIV_DEGREE_Y) + 1;
+			ind1x[i] = (i % DIV_DEGREE_X_SOBEL) * IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL;
+	    	ind2x[i] = ind1x[i] + (IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL) + 1;
+	    	ind1y[i] = (i / DIV_DEGREE_X_SOBEL) * IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL;
+	    	ind2y[i] = ind1y[i] + (IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL) + 1;
 	}
 
 	select{
-		case(int i=0;i<NUM_CHILDREN;i++)
+		case(int i=0;i<NUM_CHILDREN_SOBEL;i++)
 				getIMGComponents(myChannels[i],processed_image,ind1x[i],ind2x[i],ind1y[i],ind2y[i],ind1y[i]);
 	}
 }
 
 void sobel_child(unsigned parent_id, unsigned rank){
 	channel parentCommunicationChannel;
-	unsigned time1,time2;
+	unsigned time1,time2,time_start,time_end;
 	timer t;
 	unsigned printer[4];
-	const unsigned subimg_width = IMG_WIDTH/DIV_DEGREE_X + 4;
-	const unsigned subimg_length = IMG_LENGTH/DIV_DEGREE_Y + 4;
+	const unsigned subIMG_WIDTH_SOBEL = IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL + 4;
+	const unsigned subIMG_LENGTH_SOBEL = IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL + 4;
+	unsigned Comptime,Commtime;
 	unsigned sobel_matrix_x[3][3];
 	unsigned sobel_matrix_y[3][3];
 	unsigned gradient_x;
 	unsigned gradient_y;
 	unsigned gradient;
-	unsigned sub_img[IMG_WIDTH/DIV_DEGREE_X+4][IMG_LENGTH/DIV_DEGREE_Y+4]; //input matrix
-	unsigned result[IMG_WIDTH/DIV_DEGREE_X+2][IMG_LENGTH/DIV_DEGREE_Y+2]; // result
+	unsigned sub_img[IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL+4][IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL+4]; //input matrix
+	unsigned result[IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL+2][IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL+2]; // result
 
 	//asm("ldc r0, 0x3" : :) ;
 	//asm("ecallt r0" : : ) ;
@@ -312,32 +337,41 @@ void sobel_child(unsigned parent_id, unsigned rank){
 	sobel_matrix_y[2][1] = 0;
 	sobel_matrix_y[2][2] = -1;
 
+	Comptime = 0;
+	Commtime = 0;
+
+
+	t :> time_start;
+
+	t :> time1;
+
 
 	parentCommunicationChannel = client_lookupParentChanend(parent_id, rank);
 	parentCommunicationChannel = client_connectNewLocalChannel(1, parentCommunicationChannel);
 
 	//wait to receive image block from parent
 
-t :> time1;
 
-	for (int x = 0; x < subimg_width; x++){
-		for (int y = 0; y < subimg_length; y++){
+	for (int x = 0; x < subIMG_WIDTH_SOBEL; x++){
+		for (int y = 0; y < subIMG_LENGTH_SOBEL; y++){
 			sub_img[x][y] = channelReceiveWord(parentCommunicationChannel);
 		}
 	}
 
 t :> time2;
 
+	Commtime += time2-time1;
+
 
 t :> time1;
-	for (int x = 0; x < subimg_width-2; x++){
-		for (int y = 0; y < subimg_length-2; y++){
+	for (int x = 0; x < subIMG_WIDTH_SOBEL-2; x++){
+		for (int y = 0; y < subIMG_LENGTH_SOBEL-2; y++){
 			result[x][y] = 0; //initialise result matrix
 		}
 	}
 
-	for (int x = 1; x < subimg_width-1; x++){
-			for (int y = 1; y < subimg_length-1; y++){
+	for (int x = 1; x < subIMG_WIDTH_SOBEL-1; x++){
+			for (int y = 1; y < subIMG_LENGTH_SOBEL-1; y++){
 				gradient_x = sub_img[x-1][y-1] * sobel_matrix_x[0][0] + sub_img[x-1][y] * sobel_matrix_x[0][1] + sub_img[x-1][y+1] * sobel_matrix_x[0][2]
 			    + sub_img[x+1][y-1] * sobel_matrix_x[2][0] + sub_img[x+1][y] * sobel_matrix_x[2][1] + sub_img[x+1][y+1] * sobel_matrix_x[2][2];
 
@@ -354,16 +388,21 @@ t :> time1;
 
 t :> time2;
 
-if(rank==0){
-printer[0] = 0xbabebabe;
-printer[1] = time2-time1;
-printMany(2,printer);
-}
+
+Comptime += time2-time1;
+
+t :> time_end;
+
+printer[0] = time_end-time_start;
+//printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
+
+//Do print here
+if(rank==3) printMany(1,printer);
 
 
 
-	for (int x = 0; x < subimg_width-2; x++){
-		for (int y = 0; y < subimg_length-2; y++){
+	for (int x = 0; x < subIMG_WIDTH_SOBEL-2; x++){
+		for (int y = 0; y < subIMG_LENGTH_SOBEL-2; y++){
 			channelSendWord(parentCommunicationChannel,result[x][y]);
 		}
 

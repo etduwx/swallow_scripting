@@ -276,7 +276,7 @@ channelSendWord(rootCommunicationChannel,42);
 	}
 	
 
-	//printer[0] = 1000*(Comptime/(Comptime + Commtime));
+	//printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
 	//printer[0] = time_end - time_start;
 
 	//Insert Printing Here

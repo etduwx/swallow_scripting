@@ -54,9 +54,9 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 
 
 	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-		com_channel = client_lookupSpecificChanend(core_list[rank],THREAD_NO_1,15);
+		com_channel = client_lookupSpecificChanend(core_list_prim[rank],THREAD_NO_1,15);
 	else
-		com_channel = client_lookupSpecificChanend(core_list[rank],THREAD_NO_2,15);
+		com_channel = client_lookupSpecificChanend(core_list_prim[rank],THREAD_NO_2,15);
 
 	com_channel = client_connectNewLocalChannel(13,com_channel);
 
@@ -70,26 +70,26 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	if(pass_token != 1) asm("ecallt r0");
 
 	//printMany(3,os_debug);
-	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(core_list[rank - DIV_DEGREE_PRIM_X],THREAD_NO_1, 2);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(core_list_prim[rank - DIV_DEGREE_PRIM_X],THREAD_NO_1, 2);
 	os_debug[1] = 51;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NO_1, 3);
+			east_connection = client_lookupSpecificChanend(core_list_prim[rank + 1],THREAD_NO_1, 3);
 		else
-			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NO_2, 3);
+			east_connection = client_lookupSpecificChanend(core_list_prim[rank + 1],THREAD_NO_2, 3);
 	}
 
 	os_debug[1] = 52;
 	//printMany(3,os_debug);
-	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(core_list[rank + DIV_DEGREE_PRIM_X],THREAD_NO_2, 0);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(core_list_prim[rank + DIV_DEGREE_PRIM_X],THREAD_NO_2, 0);
 	os_debug[1] = 53;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != 0) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NO_1, 1);
+			west_connection = client_lookupSpecificChanend(core_list_prim[rank-1],THREAD_NO_1, 1);
 		else
-			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NO_2, 1);
+			west_connection = client_lookupSpecificChanend(core_list_prim[rank-1],THREAD_NO_2, 1);
 	}
 	os_debug[1] = 54;
 	//printMany(3,os_debug);
@@ -187,26 +187,26 @@ void set_up_consensus(unsigned parent_id, unsigned rank){
 	if(pass_token != 1) asm("ecallt r0");
 
 	//printMany(3,os_debug);
-	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(core_list[rank - DIV_DEGREE_PRIM_X],THREAD_NUMERO_1, 2);
+	if(rank >= DIV_DEGREE_PRIM_X) north_connection = client_lookupSpecificChanend(core_list_prim[rank - DIV_DEGREE_PRIM_X],THREAD_NUMERO_1, 2);
 	os_debug[1] = 51;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_X - 1) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NUMERO_1, 3);
+			east_connection = client_lookupSpecificChanend(core_list_prim[rank + 1],THREAD_NUMERO_1, 3);
 		else
-			east_connection = client_lookupSpecificChanend(core_list[rank + 1],THREAD_NUMERO_2, 3);
+			east_connection = client_lookupSpecificChanend(core_list_prim[rank + 1],THREAD_NUMERO_2, 3);
 	}
 
 	os_debug[1] = 52;
 	//printMany(3,os_debug);
-	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(core_list[rank + DIV_DEGREE_PRIM_X],THREAD_NUMERO_2, 0);
+	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) south_connection = client_lookupSpecificChanend(core_list_prim[rank + DIV_DEGREE_PRIM_X],THREAD_NUMERO_2, 0);
 	os_debug[1] = 53;
 	//printMany(3,os_debug);
 	if(rank % DIV_DEGREE_PRIM_X != 0) {
 		if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 
-			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NUMERO_1, 1);
+			west_connection = client_lookupSpecificChanend(core_list_prim[rank-1],THREAD_NUMERO_1, 1);
 		else
-			west_connection = client_lookupSpecificChanend(core_list[rank-1],THREAD_NUMERO_2, 1);
+			west_connection = client_lookupSpecificChanend(core_list_prim[rank-1],THREAD_NUMERO_2, 1);
 	}
 	os_debug[1] = 54;
 	//printMany(3,os_debug);

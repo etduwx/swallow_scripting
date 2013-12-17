@@ -12,7 +12,7 @@
 #include "Swallow-prim-checks.h"
 #include "swallow_comms.h"
 #include "Power_Measure_Lib.h"
-#define MAIN_FILE
+#define MAIN_FILE_PRIM
 #define NUM_VISITED_LIMIT 64
 #define SET_MODE 1
 
@@ -48,7 +48,7 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
       }
       for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	    //  client_createThread(0,100,i,i+OFFSET);
-	      client_createThread(0,100,i,core_list[i]);
+	      client_createThread(0,100,i,core_list_prim[i]);
 	      channelListen(myChannels[i]);
       }
 

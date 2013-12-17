@@ -6,15 +6,16 @@
 #include "blur.h"
 #include "Swallow-prim.h"
 //#include "matrixmul.h"
-//#include "Swallow-sobel.h"
+#include "Swallow-sobel.h"
 
-#define NUMBEROFSTARTS 1
+#define NUMBEROFSTARTS 2
 
 // OBSOLETE WITH NEW client_createThread
 unsigned getStartAddress(unsigned index)
 {
 	void (*starts[NUMBEROFSTARTS])(unsigned,unsigned) ; // void (void) function pointer
 	starts[0] = prim_child; 
+	starts[1] = sobel_child; 
 	
 	
 	return (unsigned) starts[index] ;
@@ -31,8 +32,6 @@ unsigned getStartAddress(unsigned index)
  *          5) After select is finished, call nOS_disableEvent(channel c) on each channel that was previously enabled
  *
  */
-
-
 
 // Example event handler. Installed by an installHandlerTo... call (see below)
 void fooEventHandler()

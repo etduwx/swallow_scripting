@@ -11,7 +11,12 @@ match = "#define STAGES_OF_PIPELINE"
 outputfile = "results.csv"
 outputreadfile = "print_output.txt"
 
+PARENTCORE_PRIM = 1
+PARENTCORE_SOBEL = 1
+PARENTCORE_BLUR = 1
+PARENTCORE_MERGESORT = 1
 PARENTCORE_ID = 1
+
 NUMCORES_INIT = 36
 INITIALFUNCTIONS_PATH_BASE = "Swallow-nOS_initialFunctions_base.c"
 INITIALFUNCTIONS_PATH = "Swallow-nOS_initialFunctions.c"
@@ -27,6 +32,11 @@ BLUR_HEADER_BASE_PATH = "blur_base.h"
 BLUR_BODY_BASE_PATH = "blur_base.xc"
 BLUR_BODY_PATH = "blur.xc"
 BLUR_HEADER_PATH = "blur.h"
+
+SOBEL_HEADER_BASE_PATH = "Swallow-sobel_base.h"
+SOBEL_BODY_BASE_PATH = "Swallow-sobel_base.xc"
+SOBEL_HEADER_PATH = "Swallow-sobel.h"
+SOBEL_BODY_PATH = "Swallow-sobel.xc"
 
 MCMAIN_PATH = "mcmain_prim.xc"
 MCMAIN_BASE_PATH = "mcmain_prim_base.xc"
@@ -74,7 +84,15 @@ def getReplacementsPrims(typeofEditing):
 def getReplacementsBlur(typeofEditing):
         return {
             'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
-            'ratio' : {'//printer[0] = 1000*(Comptime':'printer[0] = 1000*(Comptime'},
+            'ratio' : {'//printer[0] = 1000*((double)Comptime':'printer[0] = 1000*((double)Comptime'},
+            'time'  : {'//printer[0] = time_end':'printer[0] = time_end'},
+            'none'  : {}
+            }.get(typeofEditing,{'//control_channel':'control_channel', '//printMany(8':'printMany(8'})
+
+def getReplacementsSobel(typeofEditing):
+        return {
+            'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
+            'ratio' : {'//printer[0] = 1000*((double)Comptime':'printer[0] = 1000*((double)Comptime'},
             'time'  : {'//printer[0] = time_end':'printer[0] = time_end'},
             'none'  : {}
             }.get(typeofEditing,{'//control_channel':'control_channel', '//printMany(8':'printMany(8'})
@@ -85,11 +103,10 @@ def editPrimBody(coreList, typeOfEditing, threadNum,appList):
     global PRIMS_CHECK_PATH
     global PRIMS_CHECK_BASE
 
-    create_match = "client_createThread(0,100,i,core_list[i]);"
+    create_match = "client_createThread(0,100,i,core_list_prim[i]);"
     main_match = "void prim_main"
     comms_match_in = "//Chan in here"
     comms_match_out = "//Chan out here"
-    core_match = "num_done = 0"
     core_check_match = "//Insert core_list Here"
     print_thread_match = "//Do print here"
     replacements = getReplacementsPrims(typeOfEditing)
@@ -116,13 +133,13 @@ def editPrimBody(coreList, typeOfEditing, threadNum,appList):
                 newFile.write("\tc_out <: 42;\n")  
             else:
                 newFile.write(line)
-        elif core_match in line:
+        elif core_check_match in line:
             newFile.write(line)
             for i in xrange(len(coreList)):
-                line = "core_list[" + str(i) + "] = " + str(coreList[i]) + ";\n"
+                line = "core_list_prim[" + str(i) + "] = " + str(coreList[i]) + ";\n"
                 newFile.write(line)
         elif create_match in line:
-            newFile.write("client_createThread(" + str(appList.index("prim")) + ",100,i,core_list[i]);\n")
+            newFile.write("client_createThread(" + str(appList.index("prim")) + ",100,i,core_list_prim[i]);\n")
         elif print_thread_match in line:
             newFile.write(line)
             if(typeOfEditing=='time' or typeOfEditing=='ratio'):
@@ -144,7 +161,7 @@ def editPrimBody(coreList, typeOfEditing, threadNum,appList):
         if core_check_match in line:
             newFile.write(line)
             for i in xrange(len(coreList)):
-                line = "core_list[" + str(i) + "] = " + str(coreList[i]) + ";\n"
+                line = "core_list_prim[" + str(i) + "] = " + str(coreList[i]) + ";\n"
                 newFile.write(line)
         else:
             newFile.write(line)
@@ -154,6 +171,59 @@ def editPrimBody(coreList, typeOfEditing, threadNum,appList):
     editFile.close()
     os.remove(PRIMS_CHECK_PATH)
     shutil.move(abs_path,PRIMS_CHECK_PATH)
+
+def editSobelBody(coreList, typeOfEditing, threadNum,appList):
+    global SOBEL_BODY_PATH
+    global SOBEL_BODY_BASE_PATH
+
+    create_match = "client_createThread(0,100,i,core_list_sobel[i]);"
+    main_match = "void sobel_main"
+    comms_match = "//Chan in-outs here"
+    core_check_match = "//Insert core_list Here"
+    print_thread_match = "//Do print here"
+    replacements = getReplacementsSobel(typeOfEditing)
+        
+    fh, abs_path = mkstemp()
+    newFile = open(abs_path,'w')
+    editFile = open(SOBEL_BODY_BASE_PATH)
+    for line in editFile:
+        if main_match in line:
+            if appList.index("sobel") == 0:
+                if len(appList) == 1:
+                    arguments = "chanend c_in, unsigned shouldIRun, chanend control_channel"
+                else:
+                    arguments = "chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel"
+            elif appList.index("sobel") < len(appList) - 1:
+                arguments = "chanend c_in, chanend c_out, unsigned shouldIRun"
+            else:
+                arguments = "chanend c_in, unsigned shouldIRun"
+            newFile.write("void sobel_main(" + arguments + "){\n")
+        elif comms_match in line:
+            newFile.write("\tc_in :> foo;\n")
+            if (appList.index("sobel") < (len(appList) - 1)):
+                newFile.write("\tc_out <: 42;\n")  
+            else:
+                newFile.write(line)
+        elif core_check_match in line:
+            newFile.write(line)
+            for i in xrange(len(coreList)):
+                line = "core_list_sobel[" + str(i) + "] = " + str(coreList[i]) + ";\n"
+                newFile.write(line)
+        elif create_match in line:
+            newFile.write("client_createThread(" + str(appList.index("sobel")) + ",100,i,core_list_sobel[i]);\n")
+        elif print_thread_match in line:
+            newFile.write(line)
+            if(typeOfEditing=='time' or typeOfEditing=='ratio'):
+                newFile.write("if(rank==" + str(threadNum)+") printMany(1,printer);\n")
+        else:
+            for src,target in replacements.iteritems():
+                line = (line.replace(src,target))
+            newFile.write(line)
+    newFile.close()
+    os.close(fh)
+    editFile.close()
+    os.remove(SOBEL_BODY_PATH)
+    shutil.move(abs_path,SOBEL_BODY_PATH)
 
 def editBlurBody(coreList,typeOfEditing,threadNum,appList):
     global BLUR_BODY_PATH
@@ -336,6 +406,86 @@ def editPrimHeader(coreList,appList):
     os.remove(PRIMS_HEADER_PATH)
     shutil.move(abs_path,PRIMS_HEADER_PATH)
 
+def editSobelHeader(coreList,appList):
+    numChildren = len(coreList)
+    match_header_xc = "void sobel_main(chanend c_in"
+    match_header_c = "void sobel_main(unsigned c_in"
+
+    match_x = "#define DIV_DEGREE_X_SOBEL "
+    match_y = "#define DIV_DEGREE_Y_SOBEL "
+    match_width = "#define IMG_WIDTH_SOBEL "
+    match_length = "#define IMG_LENGTH_SOBEL "
+    match_children = "#define NUM_CHILDREN_SOBEL "
+
+    #print numChildren
+    #print coreList
+
+    if(numChildren==4):
+        div_x = 2
+        div_y = 2
+    elif(numChildren==6):
+        div_x = 3
+        div_y = 2
+    elif(numChildren==8):
+        div_x=4
+        div_y=2
+    elif(numChildren==9):
+        div_x=3
+        div_y=3
+    elif(numChildren==12):
+        div_x=4
+        div_y=3
+    else:
+        div_x=4
+        div_y=4
+
+    baseFile = open(SOBEL_HEADER_BASE_PATH)
+    fh, abs_path = mkstemp()
+    newFile = open(abs_path,'w')
+    for line in baseFile:
+        if match_x in line:
+            newFile.write(match_x+ str(div_x) + "\n")
+        elif match_y in line:
+            newFile.write(match_y + str(div_y) + "\n")
+        elif match_children in line:
+            newFile.write(match_children + str(numChildren) + "\n")
+        elif match_width in line:
+            newFile.write(match_width + str(div_x*4) + "\n")
+        elif match_length in line:
+            newFile.write(match_length + str(div_y*4) + "\n")
+        elif match_header_xc in line:
+            if appList.index("sobel") == 0:
+                if len(appList) == 1:
+                    arguments = "chanend c_in, unsigned shouldIRun, chanend control_channel"
+                else:
+                    arguments = "chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel"
+            elif appList.index("sobel") < len(appList) - 1:
+                arguments = "chanend c_in, chanend c_out, unsigned shouldIRun"
+            else:
+                arguments = "chanend c_in, unsigned shouldIRun"
+
+            newFile.write("void sobel_main(" + arguments + ");\n")
+        elif match_header_c in line:
+            if appList.index("sobel") == 0:
+                if len(appList) == 1:
+                    arguments = "unsigned c_in, unsigned shouldIRun, unsigned control_channel"
+                else:
+                    arguments = "unsigned c_in, unsigned c_out, unsigned shouldIRun, unsigned control_channel"
+            elif appList.index("sobel") < len(appList) - 1:
+                arguments = "unsigned c_in, unsigned c_out, unsigned shouldIRun"
+            else:
+                arguments = "unsigned c_in, unsigned shouldIRun"
+
+            newFile.write("void sobel_main(" + arguments + ");\n")
+        else:
+            newFile.write(line)
+
+    newFile.close()
+    os.close(fh)
+    baseFile.close()
+    os.remove(SOBEL_HEADER_PATH)
+    shutil.move(abs_path,SOBEL_HEADER_PATH)
+
 def print_to_csv(appList,coreList,values):
     global outputfile
     f = open(outputfile,"a+")
@@ -372,7 +522,7 @@ def print_to_csv(appList,coreList,values):
     f.close()        
 
 # Need to add power or not power functionality
-def editMCMain_initialFunctions(appList):
+def editMCMain_initialFunctions(appList,parentCores):
     global MCMAIN_BASE_PATH
     global MCMAIN_PATH
     global INITIALFUNCTIONS_PATH_BASE
@@ -468,6 +618,12 @@ def addBlur(coreList,measurementType,threadNum, appList):
     editBlurHeader(coreList,appList)
     editBlurBody(coreList,measurementType,threadNum,appList)
 
+def addSobel(coreList,measurementType,threadNum, appList):
+
+    #editMCMain("blur",measurePower)
+    editSobelHeader(coreList,appList)
+    editSobelBody(coreList,measurementType,threadNum,appList)
+
 
 def runExperiments(appList,coreNums):
 
@@ -477,6 +633,10 @@ def runExperiments(appList,coreNums):
     global timeVals
     global ratioSum
     global timeSum
+    global PARENTCORE_BLUR
+    global PARENTCORE_SOBEL
+    global PARENTCORE_PRIM
+    global PARENTCORE_MERGESORT
 
     indices = [0] * 3
     states = ["none","none","none","none"]
@@ -486,6 +646,7 @@ def runExperiments(appList,coreNums):
     cores = [0] * 3
     curLastind = 0
     primflag = 0
+    parentcores =[]
 
     if any("prim" in s for s in appList):
         lastInd += 1
@@ -515,10 +676,10 @@ def runExperiments(appList,coreNums):
     else:
         lim3 = 1
 
-    if lastInd >=2:
-        lim2 = upperBound - cores[1] + 1
-    else:
-        lim2 = 1
+    #if lastInd >=2:
+     #   lim2 = upperBound - cores[1] + 1
+    #else:
+    lim2 = 1
 
     if lastInd >=1 and primflag == 0:
         lim1 = upperBound - cores[0] + 1
@@ -535,18 +696,22 @@ def runExperiments(appList,coreNums):
                 values = []
                 coreList = []
                 if any("prim" in s for s in appList):
-                    coreList.append(range(4,4+coreNums[appList.index("prim")]))
+                    coreList.append(range(8,8+coreNums[appList.index("prim")]))
                     apps.append("prim")
+                    parentcores.append(str(PARENTCORE_PRIM))
                 if any("blur" in s for s in appList):
                     #coreList.append([12,12,12,12])
                     coreList.append(range(8+indices[appinds[0]],8+indices[appinds[0]]+coreNums[appList.index("blur")]))
                     apps.append("blur")
+                    parentcores.append(str(PARENTCORE_BLUR))
                 if any("sobel" in s for s in appList):
-                    coreList.append(range(4+indices[appinds[1]],4+indices[appinds[1]]+coreNums[appList.index("sobel")]))
+                    coreList.append(range(10+indices[appinds[1]],10+indices[appinds[1]]+coreNums[appList.index("sobel")]))
                     apps.append("sobel")
+                    parentcores.append(str(PARENTCORE_SOBEL))
                 if any("mergesort" in s for s in appList):
                     coreList.append(range(4+indices[appinds[2]],4+indices[appinds[2]]+coreNums[appList.index("mergesort")]))
                     apps.append("mergesort")
+                    parentcores.append(str(PARENTCORE_MERGESORT))
 
                 abc = []        
                 for z in xrange(len(coreList)):
@@ -555,7 +720,9 @@ def runExperiments(appList,coreNums):
                     abc.append(temp)
                 #print(values)
 
-                editMCMain_initialFunctions(apps)
+
+
+                editMCMain_initialFunctions(apps,parentcores)
 
                 for coreAppIndex in xrange(len(apps)):
                     timeSum = 0
@@ -679,8 +846,9 @@ def main():
 
     applications.append("prim")
     #applications.append("blur")
+    applications.append("sobel")
 
-    numCores = [4]
+    numCores = [4,4]
 
 
     mode = "append"
@@ -698,10 +866,10 @@ def main():
         f.close()
 
 
-    for x in (4,6,9,12):
-        numCores = [x]
+  
+  
 
-        runExperiments(applications,numCores)
+    runExperiments(applications,numCores)
 
 
 

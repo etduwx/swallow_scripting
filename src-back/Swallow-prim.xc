@@ -12,7 +12,7 @@
 #include "Swallow-prim-checks.h"
 #include "swallow_comms.h"
 #include "Power_Measure_Lib.h"
-#define MAIN_FILE
+#define MAIN_FILE_PRIM
 #define NUM_VISITED_LIMIT 64
 #define SET_MODE 1
 
@@ -27,7 +27,7 @@
 } */
 
 //Prim's algorithm parameters
-void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
+void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel){
 
 	unsigned foo, child_token,num_done;
 	channel myChannels[2*NUM_CHILDREN_PRIM];
@@ -39,12 +39,12 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	
 
       num_done = 0;
-core_list[0] = 4;
-core_list[1] = 5;
-core_list[2] = 6;
-core_list[3] = 7;
 
      //Insert core_list Here
+core_list_prim[0] = 8;
+core_list_prim[1] = 9;
+core_list_prim[2] = 10;
+core_list_prim[3] = 11;
 
 
       for(unsigned i=0;i<2*NUM_CHILDREN_PRIM;i++){
@@ -52,7 +52,7 @@ core_list[3] = 7;
       }
       for(unsigned i=0;i<NUM_CHILDREN_PRIM;i++){
 	    //  client_createThread(0,100,i,i+OFFSET);
-client_createThread(0,100,i,core_list[i]);
+client_createThread(0,100,i,core_list_prim[i]);
 	      channelListen(myChannels[i]);
       }
 
@@ -98,7 +98,7 @@ client_createThread(0,100,i,core_list[i]);
       }
 
 
-      //Chan out here
+	c_out <: 42;
 
 //      client_createThread(1,100,0,16);
 
@@ -837,11 +837,10 @@ t :> time_end;
    printer[3] = sum*counter;
    printer[4] = 0xbadbeef;
    printer[5] = sum2*counter2;
-  printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
+  //printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
   //printer[0] = printer[1];
 
   //Do print here
-if(rank==1) printMany(1,printer);
 
    time_end += 100000000;
    channelSendWord(parentCommunicationChannel,4);

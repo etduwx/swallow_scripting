@@ -49,8 +49,8 @@ unsigned xc_check_edge(unsigned rank, unsigned in_var,unsigned north,unsigned ea
 void delay_execution(unsigned delay);
 #endif /* SWALLOW_PRIM_H_ */
 
-#ifdef MAIN_FILE
-unsigned core_list[NUM_CHILDREN_PRIM];
+#ifdef MAIN_FILE_PRIM
+unsigned core_list_prim[NUM_CHILDREN_PRIM];
 #else
-extern unsigned core_list[NUM_CHILDREN_PRIM];
+extern unsigned core_list_prim[NUM_CHILDREN_PRIM];
 #endif

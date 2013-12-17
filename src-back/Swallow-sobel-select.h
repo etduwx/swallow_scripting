@@ -10,6 +10,6 @@ void xc_sobelSelect(unsigned c[],unsigned processed_image[][34]);
 #endif
 */
 
-void sobelSelect(channel myChannels[],unsigned processed_image[][IMG_LENGTH+2]);
+void sobelSelect(channel myChannels[],unsigned processed_image[][IMG_LENGTH_SOBEL+2]);
 
 #endif /* SWALLOW_SOBEL_H_ */

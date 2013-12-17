@@ -23,12 +23,13 @@
 #include "Swallow-prim.h"
 #include "blur.h"
 #include "Power_Measure_Lib.h"
-//#include "Swallow-sobel.h"
+#include "Swallow-sobel.h"
 
 #define NCORES (26)
 int main(void)
 {
 	chan c[NCORES+1];
+chan p;
 	chan k;	
 
 	par (int i = 0 ; i < 1 ; i += 1) {
@@ -37,7 +38,8 @@ int main(void)
 }
 	par (int i = 1 ; i < 2 ; i += 1) {
 	on stdcore[i] : nOS_start(c[i],c[i+1],0) ;
-	on stdcore[i] : prim_main(c[NCORES],1,k) ; 
+	on stdcore[i] : prim_main(c[NCORES],p,1,k) ; 
+	on stdcore[i] : sobel_main(p,1) ; 
 	on stdcore[i] : powerMeasure(k);
 }
 
