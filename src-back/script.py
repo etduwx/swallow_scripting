@@ -538,7 +538,8 @@ def runExperiments(appList,coreNums):
                     coreList.append(range(4,4+coreNums[appList.index("prim")]))
                     apps.append("prim")
                 if any("blur" in s for s in appList):
-                    coreList.append(range(4+indices[appinds[0]],4+indices[appinds[0]]+coreNums[appList.index("blur")]))
+                    #coreList.append([12,12,12,12])
+                    coreList.append(range(8+indices[appinds[0]],8+indices[appinds[0]]+coreNums[appList.index("blur")]))
                     apps.append("blur")
                 if any("sobel" in s for s in appList):
                     coreList.append(range(4+indices[appinds[1]],4+indices[appinds[1]]+coreNums[appList.index("sobel")]))
@@ -677,12 +678,12 @@ def main():
     applications = []
 
     applications.append("prim")
-    applications.append("blur")
+    #applications.append("blur")
 
-    numCores = [4,4]
+    numCores = [4]
 
 
-    mode = "new"
+    mode = "append"
 
 
     if mode == "append":
@@ -697,7 +698,10 @@ def main():
         f.close()
 
 
-    runExperiments(applications,numCores)
+    for x in (4,6,9,12):
+        numCores = [x]
+
+        runExperiments(applications,numCores)
 
 
 
