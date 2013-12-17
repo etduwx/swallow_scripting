@@ -6,7 +6,7 @@
 #include "blur.h"
 #include "Swallow-prim.h"
 //#include "matrixmul.h"
-//#include "Swallow-sobel.h"
+#include "Swallow-sobel.h"
 
 #define NUMBEROFSTARTS 
 
@@ -30,8 +30,6 @@ unsigned getStartAddress(unsigned index)
  *          5) After select is finished, call nOS_disableEvent(channel c) on each channel that was previously enabled
  *
  */
-
-
 
 // Example event handler. Installed by an installHandlerTo... call (see below)
 void fooEventHandler()

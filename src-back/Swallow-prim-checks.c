@@ -4,8 +4,6 @@
 #include "Swallow-prim-checks.h"
 #define THREAD_NO_1 1
 #define THREAD_NO_2 1
-#define THREAD_NO_3 1
-#define THREAD_NO_4 1
 #define THREAD_NUMERO_1 3
 #define THREAD_NUMERO_2 3
 

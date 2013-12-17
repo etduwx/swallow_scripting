@@ -29,7 +29,7 @@ void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	unsigned foo;
 	channel parentch;
 	unsigned printer[10];	
-	unsigned image[IMG_LENGTH][IMG_WIDTH];
+	unsigned image[IMG_LENGTH_BLUR][IMG_WIDTH_BLUR];
 	unsigned XF = 0;
 	unsigned YF = 0;
 	unsigned x = 0;
@@ -49,8 +49,8 @@ void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	t :> time1;
 	//control_channel <: (char) POWERMEASURE_START;
 	
-		for(i = 0; i < IMG_WIDTH; i++){
-			for(j = 0; j < IMG_LENGTH; j++){
+		for(i = 0; i < IMG_WIDTH_BLUR; i++){
+			for(j = 0; j < IMG_LENGTH_BLUR; j++){
 				image[i][j] = 1;
 			}
 		}
@@ -94,7 +94,7 @@ void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 }
 
 void blur_child(unsigned parent_id, unsigned rank){
-	unsigned printer[IMG_LENGTH];
+	unsigned printer[IMG_LENGTH_BLUR];
 	double tempor;
 	double Commtime;
 		double Comptime;
@@ -208,7 +208,7 @@ Comptime = 0;
 
 	else{
 		
-		unsigned result[IMG_LENGTH][IMG_WIDTH];
+		unsigned result[IMG_LENGTH_BLUR][IMG_WIDTH_BLUR];
 		channel dest = 0;		
 		channel parentCommunicationChannel,rootCommunicationChannel;
 		unsigned doneSignal;
@@ -247,11 +247,11 @@ Comptime = 0;
 
         t:> time1;
 
-		for(i = 0; i < IMG_WIDTH; i++){
-			for(j = 0; j < IMG_LENGTH; j++){
+		for(i = 0; i < IMG_WIDTH_BLUR; i++){
+			for(j = 0; j < IMG_LENGTH_BLUR; j++){
 				printer[j] = result[i][j];
 			}
-			//printMany(IMG_LENGTH,printer);
+			//printMany(IMG_LENGTH_BLUR,printer);
 		}
 
 		t :> time2;

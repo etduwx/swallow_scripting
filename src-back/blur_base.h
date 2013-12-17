@@ -1,12 +1,12 @@
 #ifndef MATRIXMUL_H_
 #define MATRIXMUL_H_
 
-#define IMG_LENGTH 25
-#define IMG_WIDTH 25
+#define IMG_LENGTH_BLUR 25
+#define IMG_WIDTH_BLUR 25
 #define XFACTOR 5
 #define YFACTOR 5
-#define XDIV IMG_LENGTH/XFACTOR
-#define YDIV IMG_WIDTH/YFACTOR
+#define XDIV IMG_LENGTH_BLUR/XFACTOR
+#define YDIV IMG_WIDTH_BLUR/YFACTOR
 #define STAGES_OF_PIPELINE 8
 #ifdef __XC__
 void xc_printPower(chanend powerChannel);

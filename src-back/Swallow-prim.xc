@@ -27,7 +27,7 @@
 } */
 
 //Prim's algorithm parameters
-void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel){
+void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 
 	unsigned foo, child_token,num_done;
 	channel myChannels[2*NUM_CHILDREN_PRIM];
@@ -36,8 +36,6 @@ void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control
 	double tempor;
 
 	c_in :> foo;
-	c_out <: 42;
-
 	
 
       num_done = 0;
@@ -99,6 +97,9 @@ client_createThread(0,100,i,core_list[i]);
 	      child_token = channelReceiveWord(myChannels[i]);
       }
 
+
+      //Chan out here
+
 //      client_createThread(1,100,0,16);
 
       //control_channel <: (char) POWERMEASURE_START;
@@ -109,9 +110,6 @@ client_createThread(0,100,i,core_list[i]);
       }
 
 
-
-	printer[0] = client_getThreadStatus(4);
-	printMany(1,printer);
 
       //control_channel <: (char) POWERMEASURE_STOP;
       //control_channel <: (char) POWERMEASURE_READVALUES;
@@ -839,10 +837,11 @@ t :> time_end;
    printer[3] = sum*counter;
    printer[4] = 0xbadbeef;
    printer[5] = sum2*counter2;
-  //printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
+  printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
   //printer[0] = printer[1];
 
   //Do print here
+if(rank==1) printMany(1,printer);
 
    time_end += 100000000;
    channelSendWord(parentCommunicationChannel,4);
