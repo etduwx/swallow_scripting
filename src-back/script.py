@@ -892,11 +892,11 @@ def main():
 
     applications = []
 
-    applications.append("prim")
-    applications.append("blur")
+    #applications.append("prim")
+    #applications.append("blur")
     applications.append("sobel")
 
-    numCores = [4,4,4]
+    numCores = [4]
 
 
     mode = "append"
