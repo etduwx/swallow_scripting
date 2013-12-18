@@ -774,7 +774,10 @@ def runExperiments(appList,coreNums):
                     abc.append(temp)
                 #print(values)
 
-                par = parentcores
+                par = []
+
+                for i in parentcores:
+                    par.append(i)
 
                 edit_buildfile(apps)
                 editMCMain_initialFunctions(apps,par)
@@ -906,20 +909,19 @@ def main():
     numCores = [4]
 
 
-    mode = "New"
+    mode = "new"
 
 
-    if mode == "append":
+    if mode == "append+":
         f = open(outputfile,'a')
         f.write('\n')
         f.close()
-    else:
+    elif mode == "new":
         if os.path.exists(outputfile):
             os.remove(outputfile)
         f = open(outputfile,'w+')
         f.write("Application 1, Application 2, Application 3, Cores App 1, Cores App 2, Cores App 3, Parent Core App 1, Parent Core App 2, Parent Core App 3, Power Stripe 1, Power Stripe 2, Power Stripe 3, Power Stripe 4, Ratio App 1, Avg. Ratio 1, Time App 1, Avg. Time 1, Ratio App 2, Avg. Ratio 2, Time App 2, Avg. Time 2, Ratio App 3, Avg. Ratio 3, Time App 3, Avg. Time 3 \n")
         f.close()
-
 
   
   
