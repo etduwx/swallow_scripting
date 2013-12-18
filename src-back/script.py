@@ -486,7 +486,7 @@ def print_to_csv(appList,coreList,parentCores,values):
 
     for i in xrange(3):
         if i < len(parentCores):
-            f.write(parentCores[i] + ",")
+            f.write(str(parentCores[i]) + ",")
         else:
             f.write(",")
 
