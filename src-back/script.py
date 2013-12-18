@@ -3,11 +3,6 @@ import os, subprocess, signal, shutil
 from time import sleep
 from tempfile import mkstemp
 
-
-filename = "blur.h"
-filename_xc = "blur.xc"
-match = "#define STAGES_OF_PIPELINE"
-
 outputfile = "results.csv"
 outputreadfile = "print_output.txt"
 
@@ -38,8 +33,12 @@ SOBEL_BODY_BASE_PATH = "Swallow-sobel_base.xc"
 SOBEL_HEADER_PATH = "Swallow-sobel.h"
 SOBEL_BODY_PATH = "Swallow-sobel.xc"
 
-MCMAIN_PATH = "mcmain_prim.xc"
-MCMAIN_BASE_PATH = "mcmain_prim_base.xc"
+MCMAIN_PATH = "mcmain.xc"
+MCMAIN_BASE_PATH = "mcmain_base.xc"
+BUILDFILE_BASE = "build_base"
+BUILDFILE = "build"
+
+MAXCORES = 16
 
 def editFile(x):
 
@@ -56,22 +55,6 @@ def editFile(x):
         else:
             f.write(line)
     f.close()
-
-#def edit_xc_File(x):
-
-#    editingFile = open(filename,"r")
-
-#    lines = editingFile.readlines()
-
-#    editingFile.close()
-
-#    f = open(filename,"w")
-#    for line in lines:
-#        if match in line:
-#            f.write(match + " " + str(x) + "\n")
-#        else:
-#            f.write(line)
-#    f.close()     
 
 def getReplacementsPrims(typeofEditing):
         return {
@@ -527,54 +510,91 @@ def editMCMain_initialFunctions(appList,parentCores):
     global MCMAIN_PATH
     global INITIALFUNCTIONS_PATH_BASE
     global INITIALFUNCTIONS_PATH
+    global MAXCORES
 
+    cur_line = 0
+    next_line = 0
+    def_cores_match = "#define NCORES "
+    start_printing = "//Begin printing"
     initials_match = "void (*starts[NUMBEROFSTARTS])(unsigned,unsigned) ;"
     num_starts_match = "#define NUMBEROFSTARTS "
     channel_match = "chan c[NCORES+1];"
-    match = "par (int i = " + str(PARENTCORE_ID) + ' ;' 
     fh, abs_path = mkstemp()
     newFile = open(abs_path,'w')
     baseFile = open(MCMAIN_BASE_PATH)
+    sortedcores = sorted(parentCores)
 
-    flag = 0
+    z = 0
 
     for line in baseFile:
-        if channel_match in line:
+        if def_cores_match in line:
+            newFile.write(def_cores_match +"(" + str(MAXCORES) + ")\n")
+        elif channel_match in line:
             newFile.write(line)
             if len(appList) > 1:
                 if len(appList) > 2:
                     newFile.write("chan p[" + str(len(appList) - 1) + "];\n")
                 else:
                     newFile.write("chan p;\n")
-        elif match in line:
-            flag = 1
-            newFile.write(line) 
-        elif flag  == 1:
-            #newFile.write('\ton stdcore[i] : ' + str(appToAdd) + '_main(c[NCORES],1,k) ; \n')
+        elif start_printing in line:
             newFile.write(line)
-            flag = 2
-        elif flag == 2:
-            for z in xrange(len(appList)):
-                if z == 0:
-                    if len(appList) > 1:
-                        if len(appList) == 2:
-                            newFile.write('\ton stdcore[i] : ' + str(appList[z]) + '_main(c[NCORES],p,1,k) ; \n')
+            while(cur_line < MAXCORES):
+                newFile.write("\n")
+                newFile.write("\n")
+                if z < len(sortedcores) or cur_line < 2:
+                    if cur_line != sortedcores[z] and cur_line > 1:
+                        newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(sortedcores[z]) + " ; i += 1) {\n")
+                        next_line = sortedcores[z]
+                    elif cur_line == 0:
+                        newFile.write("\tpar (int i = 0 ; i < 1 ; i += 1) {\n")
+                        newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
+                        newFile.write("\ton stdcore[i] : startSync(c[i]) ;\n")
+                        next_line = 1
+                    elif(cur_line == 1):
+                        newFile.write("\tpar (int i = 1 ; i < 2 ; i += 1) {\n")
+                        newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
+                        newFile.write("\ton stdcore[i] : powerMeasure(k) ;\n")
+                        next_line = 2
+                    else:
+                        newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(cur_line+1) + " ; i += 1) {\n")
+                        newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
+                        next_line = cur_line+1
+                    
+                    while(z < len(sortedcores)):
+                        if sortedcores[z] == cur_line:
+                            if parentCores.index(sortedcores[z]) == 0:
+                                if len(appList) > 1:
+                                    if len(appList) == 2:
+                                        newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],p,1,k) ; \n')
+                                    else:
+                                        newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],p[0],1,k) ; \n')
+                                else:
+                                    newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],1,k) ; \n')
+                            elif parentCores.index(sortedcores[z]) < len(appList) - 1:
+                                newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p[' + str(parentCores.index(sortedcores[z])-1) + '],p[' + str(parentCores.index(sortedcores[z])) + '],1) ; \n')
+                            else:
+                                if len(appList) == 2:
+                                    newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p,1) ; \n')
+                                else:
+                                    newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p[' + str(parentCores.index(sortedcores[z])-1) + '],1) ; \n')
+                            parentCores[parentCores.index(sortedcores[z])] = 99
+                            z += 1
                         else:
-                            newFile.write('\ton stdcore[i] : ' + str(appList[z]) + '_main(c[NCORES],p[0],1,k) ; \n')
-                    else:
-                        newFile.write('\ton stdcore[i] : ' + str(appList[z]) + '_main(c[NCORES],1,k) ; \n')
-                elif z < len(appList) - 1:
-                    newFile.write('\ton stdcore[i] : ' + str(appList[z]) + '_main(p[' + str(z-1) + '],p[' + str(z) + '],1) ; \n')
-                else:
-                    if len(appList) == 2:
-                        newFile.write('\ton stdcore[i] : ' + str(appList[z]) + '_main(p,1) ; \n')
-                    else:
-                        newFile.write('\ton stdcore[i] : ' + str(appList[z]) + '_main(p[' + str(z-1) + '],1) ; \n')
-            newFile.write(line)
-            flag = 0
-        else:
-            newFile.write(line)
+                             break
+                    cur_line = next_line            
+                    newFile.write("}")        
 
+                else:
+                    newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(MAXCORES) + " ; i += 1) {\n")
+                    newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
+                    newFile.write("}\n")
+                    newFile.write("\n")
+                    cur_line = MAXCORES
+
+        else:
+            newFile.write(line)        
+
+                  
     os.close(fh)
     newFile.close()
     baseFile.close()
@@ -624,6 +644,36 @@ def addSobel(coreList,measurementType,threadNum, appList):
     editSobelHeader(coreList,appList)
     editSobelBody(coreList,measurementType,threadNum,appList)
 
+
+def edit_buildfile(appList):
+    global BUILDFILE
+    global BUILDFILE_BASE
+
+    fh, abs_path = mkstemp()
+    newFile = open(abs_path,'w')
+    editFile = open(BUILDFILE_BASE)
+    lookfor = "mcsc.py"
+
+    for line in editFile:
+        if lookfor in line:
+            for x in xrange(len(appList)):
+                if appList[x] == "prim":
+                    line = line + " Swallow-prim.xc Swallow-prim-checks.c"
+                elif appList[x] == "blur":
+                    line = line + " blur.xc"
+                elif appList[x] == "sobel":
+                    line = line + " Swallow-sobel.xc"
+                else:
+                    line = line + " mergesort.xc"
+            line = line + " -O3 -o binary.sgb"
+        newFile.write(line)
+
+    os.close(fh)
+    newFile.close()
+    baseFile.close()
+
+    os.remove(BUILDFILE)
+    shutil.move(abs_path,BUILDFILE)
 
 def runExperiments(appList,coreNums):
 
@@ -698,20 +748,20 @@ def runExperiments(appList,coreNums):
                 if any("prim" in s for s in appList):
                     coreList.append(range(8,8+coreNums[appList.index("prim")]))
                     apps.append("prim")
-                    parentcores.append(str(PARENTCORE_PRIM))
+                    parentcores.append(PARENTCORE_PRIM)
                 if any("blur" in s for s in appList):
                     #coreList.append([12,12,12,12])
                     coreList.append(range(8+indices[appinds[0]],8+indices[appinds[0]]+coreNums[appList.index("blur")]))
                     apps.append("blur")
-                    parentcores.append(str(PARENTCORE_BLUR))
+                    parentcores.append(PARENTCORE_BLUR)
                 if any("sobel" in s for s in appList):
                     coreList.append(range(10+indices[appinds[1]],10+indices[appinds[1]]+coreNums[appList.index("sobel")]))
                     apps.append("sobel")
-                    parentcores.append(str(PARENTCORE_SOBEL))
+                    parentcores.append(PARENTCORE_SOBEL)
                 if any("mergesort" in s for s in appList):
                     coreList.append(range(4+indices[appinds[2]],4+indices[appinds[2]]+coreNums[appList.index("mergesort")]))
                     apps.append("mergesort")
-                    parentcores.append(str(PARENTCORE_MERGESORT))
+                    parentcores.append(PARENTCORE_MERGESORT)
 
                 abc = []        
                 for z in xrange(len(coreList)):
@@ -721,7 +771,7 @@ def runExperiments(appList,coreNums):
                 #print(values)
 
 
-
+                edit_buildfile(apps)
                 editMCMain_initialFunctions(apps,parentcores)
 
                 for coreAppIndex in xrange(len(apps)):
@@ -827,9 +877,9 @@ def parseOutput(outputType,threadNum,coreAppIndex):
         timeSum += temporary
 
 def compileandRun():
-    os.system('./build3')
+    os.system('./build')
     sleep(5)
-    p1 = subprocess.Popen(["python", "run.py", "prim"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+    p1 = subprocess.Popen(["python", "run.py", "binary"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     sleep(3)
 
     p1.kill()
