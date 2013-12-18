@@ -469,7 +469,7 @@ def editSobelHeader(coreList,appList):
     os.remove(SOBEL_HEADER_PATH)
     shutil.move(abs_path,SOBEL_HEADER_PATH)
 
-def print_to_csv(appList,coreList,values):
+def print_to_csv(appList,coreList,parentCores,values):
     global outputfile
     f = open(outputfile,"a+")
     for i in xrange(3):
@@ -481,6 +481,12 @@ def print_to_csv(appList,coreList,values):
     for i in xrange(3):
         if i < len(coreList):
             f.write(coreList[i] + ",")
+        else:
+            f.write(",")
+
+    for i in xrange(3):
+        if i < len(parentCores):
+            f.write(parentCores[i] + ",")
         else:
             f.write(",")
 
@@ -828,7 +834,7 @@ def runExperiments(appList,coreNums):
                         i += 1
 
                 
-                print_to_csv(apps,abc,values)
+                print_to_csv(apps,abc,parentcores,values)
 
 
 #    if any("prim" in s for s in appList):
@@ -910,7 +916,7 @@ def main():
         if os.path.exists(outputfile):
             os.remove(outputfile)
         f = open(outputfile,'w+')
-        f.write("Application 1, Application 2, Application 3, Cores App 1, Cores App 2, Cores App 3, Power Stripe 1, Power Stripe 2, Power Stripe 3, Power Stripe 4, Ratio App 1, Avg. Ratio 1, Time App 1, Avg. Time 1, Ratio App 2, Avg. Ratio 2, Time App 2, Avg. Time 2, Ratio App 3, Avg. Ratio 3, Time App 3, Avg. Time 3 \n")
+        f.write("Application 1, Application 2, Application 3, Cores App 1, Cores App 2, Cores App 3, Parent Core App 1, Parent Core App 2, Parent Core App 3, Power Stripe 1, Power Stripe 2, Power Stripe 3, Power Stripe 4, Ratio App 1, Avg. Ratio 1, Time App 1, Avg. Time 1, Ratio App 2, Avg. Ratio 2, Time App 2, Avg. Time 2, Ratio App 3, Avg. Ratio 3, Time App 3, Avg. Time 3 \n")
         f.close()
 
 
