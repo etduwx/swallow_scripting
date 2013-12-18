@@ -469,7 +469,7 @@ def editSobelHeader(coreList,appList):
     os.remove(SOBEL_HEADER_PATH)
     shutil.move(abs_path,SOBEL_HEADER_PATH)
 
-def print_to_csv(appList,coreList,parentCores,values):
+def print_to_csv(appList,coreList,parents,values):
     global outputfile
     f = open(outputfile,"a+")
     for i in xrange(3):
@@ -485,8 +485,8 @@ def print_to_csv(appList,coreList,parentCores,values):
             f.write(",")
 
     for i in xrange(3):
-        if i < len(parentCores):
-            f.write(str(parentCores[i]) + ",")
+        if i < len(parents):
+            f.write(str(parents[i]) + ",")
         else:
             f.write(",")
 
@@ -774,9 +774,10 @@ def runExperiments(appList,coreNums):
                     abc.append(temp)
                 #print(values)
 
+                par = parentcores
 
                 edit_buildfile(apps)
-                editMCMain_initialFunctions(apps,parentcores)
+                editMCMain_initialFunctions(apps,par)
 
                 for coreAppIndex in xrange(len(apps)):
                     timeSum = 0
@@ -905,7 +906,7 @@ def main():
     numCores = [4]
 
 
-    mode = "append"
+    mode = "New"
 
 
     if mode == "append":
