@@ -14,14 +14,6 @@
 #define LOCALnOSCHANEND 0x1f02
 
 
-void startSync(chanend c_out)
-{
-	unsigned foo;
-	foo = 20;
-	c_out <: foo;
-}
-
-
 void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	double tempor;
 	unsigned time1,time2;

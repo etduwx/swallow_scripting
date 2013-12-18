@@ -29,6 +29,14 @@ out port even_leds = XS1_PORT_4F;
 unsigned noUserThreads = 0 ;
 unsigned noUserThreadsLock = 0 ;
 
+void startSync(chanend c_out)
+{
+	unsigned foo;
+
+	foo = 42;
+	c_out <: foo;
+}
+
 void enableAEC (unsigned standbyClockDivider)
 {
 	unsigned xcore_ctrl0_data;
@@ -52,7 +60,8 @@ void setFreqDivider (unsigned divider,unsigned rank)
 	write_pswitch_reg(get_local_tile_id(), XCDIV_REGNUM, divider);  // 1 -> Divide by 2 from main frequency
 	setps(PS_XCORE_CTRL0_REGNUM,0x10);
 }
-static inline void printOne(unsigned value) 
+
+static inline void printOne(unsigned value) 
 {
 	unsigned data[1];
 	data[0] = value;

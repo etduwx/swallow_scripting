@@ -18,13 +18,6 @@
 
 #include "Swallow-prim.h"
 
-/* void startSync(chanend c_out)
-{
-	unsigned foo;
-
-	foo = 42;
-	c_out <: foo;
-} */
 
 //Prim's algorithm parameters
 void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){

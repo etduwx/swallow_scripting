@@ -14,7 +14,6 @@ void xc_printPower(chanend powerChannel);
 #define chanend unsigned
 #endif
 void blur_main(chanend c_in,unsigned shoulldIRun,chanend control_channel);
-void startSync(chanend c_out);
 #ifdef chanend
 #undef chanend
 #endif
@@ -22,7 +21,6 @@ void startSync(chanend c_out);
 #define chanend unsigned
 void xc_printPower(unsigned powerChannel);
 void blur_main(chanend c_in,unsigned shouldIRun,chanend control_channel);
-void startSync(unsigned c_out);
 #endif
 void blur_child(unsigned parent_id, unsigned rank) ;
 #endif /* MATRIXMUL_H_ */

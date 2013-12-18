@@ -13,14 +13,12 @@
 #define chanend unsigned
 #endif
 void sobel_main(chanend c_in,unsigned shouldIRun, chanend control_channel);
-void startSync(chanend c_out);
 #ifdef chanend
 #undef chanend
 #endif
 void xc_sobelSelect(chanend c[],unsigned processed_image[][IMG_LENGTH_SOBEL+2]);
 #else
 void sobel_main(unsigned c_in, unsigned shouldIRun, unsigned control_channel);
-void startSync(unsigned c_out);
 void xc_sobelSelect(unsigned c[],unsigned processed_image[][IMG_LENGTH_SOBEL+2]);
 #endif
 

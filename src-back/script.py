@@ -670,10 +670,11 @@ def edit_buildfile(appList):
 
     os.close(fh)
     newFile.close()
-    baseFile.close()
+    editFile.close()
 
     os.remove(BUILDFILE)
     shutil.move(abs_path,BUILDFILE)
+    os.system("chmod a+x ./build")
 
 def runExperiments(appList,coreNums):
 
