@@ -30,11 +30,7 @@ int main(void)
 {
 	chan c[NCORES+1];
 	chan k;	
-
-	//Begin printing
-
-
-
+	
 	return 0;
 
 }

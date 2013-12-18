@@ -6,9 +6,9 @@ from tempfile import mkstemp
 outputfile = "results.csv"
 outputreadfile = "print_output.txt"
 
-PARENTCORE_PRIM = 1
-PARENTCORE_SOBEL = 1
-PARENTCORE_BLUR = 1
+PARENTCORE_PRIM = 4
+PARENTCORE_SOBEL = 5
+PARENTCORE_BLUR = 3
 PARENTCORE_MERGESORT = 1
 PARENTCORE_ID = 1
 
@@ -515,10 +515,9 @@ def editMCMain_initialFunctions(appList,parentCores):
     cur_line = 0
     next_line = 0
     def_cores_match = "#define NCORES "
-    start_printing = "//Begin printing"
     initials_match = "void (*starts[NUMBEROFSTARTS])(unsigned,unsigned) ;"
     num_starts_match = "#define NUMBEROFSTARTS "
-    channel_match = "chan c[NCORES+1];"
+    channel_match = "chan k;"
     fh, abs_path = mkstemp()
     newFile = open(abs_path,'w')
     baseFile = open(MCMAIN_BASE_PATH)
@@ -533,17 +532,16 @@ def editMCMain_initialFunctions(appList,parentCores):
             newFile.write(line)
             if len(appList) > 1:
                 if len(appList) > 2:
-                    newFile.write("chan p[" + str(len(appList) - 1) + "];\n")
+                    newFile.write("\tchan p[" + str(len(appList) - 1) + "];\n")
                 else:
-                    newFile.write("chan p;\n")
-        elif start_printing in line:
-            newFile.write(line)
+                    newFile.write("\tchan p;\n")
             while(cur_line < MAXCORES):
                 newFile.write("\n")
                 newFile.write("\n")
                 if z < len(sortedcores) or cur_line < 2:
                     if cur_line != sortedcores[z] and cur_line > 1:
                         newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(sortedcores[z]) + " ; i += 1) {\n")
+                        newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
                         next_line = sortedcores[z]
                     elif cur_line == 0:
                         newFile.write("\tpar (int i = 0 ; i < 1 ; i += 1) {\n")
@@ -587,8 +585,7 @@ def editMCMain_initialFunctions(appList,parentCores):
                 else:
                     newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(MAXCORES) + " ; i += 1) {\n")
                     newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
-                    newFile.write("}\n")
-                    newFile.write("\n")
+                    newFile.write("}")
                     cur_line = MAXCORES
 
         else:
@@ -896,10 +893,10 @@ def main():
     applications = []
 
     applications.append("prim")
-    #applications.append("blur")
+    applications.append("blur")
     applications.append("sobel")
 
-    numCores = [4,4]
+    numCores = [4,4,4]
 
 
     mode = "append"
