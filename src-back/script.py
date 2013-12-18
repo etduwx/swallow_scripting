@@ -700,7 +700,7 @@ def runExperiments(appList,coreNums):
     cores = [0] * 3
     curLastind = 0
     primflag = 0
-    parentcores =[]
+    
 
     if any("prim" in s for s in appList):
         lastInd += 1
@@ -730,10 +730,10 @@ def runExperiments(appList,coreNums):
     else:
         lim3 = 1
 
-    #if lastInd >=2:
-     #   lim2 = upperBound - cores[1] + 1
-    #else:
-    lim2 = 1
+    if lastInd >=2:
+        lim2 = upperBound - cores[1] + 1
+    else:
+        lim2 = 1
 
     if lastInd >=1 and primflag == 0:
         lim1 = upperBound - cores[0] + 1
@@ -749,6 +749,7 @@ def runExperiments(appList,coreNums):
                 apps = []
                 values = []
                 coreList = []
+                parentcores =[]
                 if any("prim" in s for s in appList):
                     coreList.append(range(8,8+coreNums[appList.index("prim")]))
                     apps.append("prim")
@@ -759,7 +760,7 @@ def runExperiments(appList,coreNums):
                     apps.append("blur")
                     parentcores.append(PARENTCORE_BLUR)
                 if any("sobel" in s for s in appList):
-                    coreList.append(range(10+indices[appinds[1]],10+indices[appinds[1]]+coreNums[appList.index("sobel")]))
+                    coreList.append(range(8+indices[appinds[1]],8+indices[appinds[1]]+coreNums[appList.index("sobel")]))
                     apps.append("sobel")
                     parentcores.append(PARENTCORE_SOBEL)
                 if any("mergesort" in s for s in appList):
@@ -902,15 +903,14 @@ def main():
 
     applications = []
 
-    #applications.append("prim")
-    #applications.append("blur")
-    applications.append("sobel")
+    applications.append("prim")
+    applications.append("blur")
+    #applications.append("sobel")
 
-    numCores = [4]
+    numCores = [4,4]
 
 
     mode = "new"
-
 
     if mode == "append+":
         f = open(outputfile,'a')
@@ -923,8 +923,6 @@ def main():
         f.write("Application 1, Application 2, Application 3, Cores App 1, Cores App 2, Cores App 3, Parent Core App 1, Parent Core App 2, Parent Core App 3, Power Stripe 1, Power Stripe 2, Power Stripe 3, Power Stripe 4, Ratio App 1, Avg. Ratio 1, Time App 1, Avg. Time 1, Ratio App 2, Avg. Ratio 2, Time App 2, Avg. Time 2, Ratio App 3, Avg. Ratio 3, Time App 3, Avg. Time 3 \n")
         f.close()
 
-  
-  
 
     runExperiments(applications,numCores)
 
