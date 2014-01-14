@@ -18,13 +18,6 @@
 
 #include "Swallow-prim.h"
 
-/* void startSync(chanend c_out)
-{
-	unsigned foo;
-
-	foo = 42;
-	c_out <: foo;
-} */
 
 //Prim's algorithm parameters
 void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel){
@@ -41,10 +34,10 @@ void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control
       num_done = 0;
 
      //Insert core_list Here
-core_list_prim[0] = 8;
-core_list_prim[1] = 9;
-core_list_prim[2] = 10;
-core_list_prim[3] = 11;
+core_list_prim[0] = 24;
+core_list_prim[1] = 25;
+core_list_prim[2] = 26;
+core_list_prim[3] = 27;
 
 
       for(unsigned i=0;i<2*NUM_CHILDREN_PRIM;i++){
@@ -832,11 +825,12 @@ south_connection :> yay;
 	  walls[num_walls] = rank;
 t :> time_end;
   // printer[0] = rank;
-   printer[1] = time_end-time_begin;
+   //printer[1] = time_end-time_begin;
    printer[2] = 0xbadbead;
    printer[3] = sum*counter;
    printer[4] = 0xbadbeef;
    printer[5] = sum2*counter2;
+   printer[1] = printer[3] + printer[5];
   //printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
   //printer[0] = printer[1];
 

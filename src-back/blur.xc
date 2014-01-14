@@ -14,22 +14,14 @@
 #define LOCALnOSCHANEND 0x1f02
 
 
-void startSync(chanend c_out)
-{
-	unsigned foo;
-	foo = 20;
-	c_out <: foo;
-}
-
-
-void blur_main(chanend c_in, unsigned shouldIRun){
+void blur_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel){
 	double tempor;
 	unsigned time1,time2;
 	timer t;
 	unsigned foo;
 	channel parentch;
 	unsigned printer[10];	
-	unsigned image[IMG_LENGTH][IMG_WIDTH];
+	unsigned image[IMG_LENGTH_BLUR][IMG_WIDTH_BLUR];
 	unsigned XF = 0;
 	unsigned YF = 0;
 	unsigned x = 0;
@@ -39,18 +31,19 @@ void blur_main(chanend c_in, unsigned shouldIRun){
 	unsigned coreList[24];
 
 	c_in :> foo;
+	c_out <: 42;
 
 
 	parentch = client_allocateNewLocalChannel(0);
 	doneSignal = client_allocateNewLocalChannel(1);
-client_createThread(1, 100, 0,8);
+client_createThread(0, 100, 0,24);
 
 	channelListen(parentch);
 	t :> time1;
 	//control_channel <: (char) POWERMEASURE_START;
 	
-		for(i = 0; i < IMG_WIDTH; i++){
-			for(j = 0; j < IMG_LENGTH; j++){
+		for(i = 0; i < IMG_WIDTH_BLUR; i++){
+			for(j = 0; j < IMG_LENGTH_BLUR; j++){
 				image[i][j] = 1;
 			}
 		}
@@ -94,7 +87,7 @@ client_createThread(1, 100, 0,8);
 }
 
 void blur_child(unsigned parent_id, unsigned rank){
-	unsigned printer[IMG_LENGTH];
+	unsigned printer[IMG_LENGTH_BLUR];
 	double tempor;
 	double Commtime;
 		double Comptime;
@@ -128,17 +121,17 @@ Comptime = 0;
 
 		//Put Switch Statement Under Here
 switch(rank){
-case 0: nextCore = 9;
+case 0: nextCore = 25;
 break; 
-case 1: nextCore = 10;
+case 1: nextCore = 26;
 break; 
-case 2: nextCore = 11;
+case 2: nextCore = 27;
 break; 
 }
 
 
 		childch = client_allocateNewLocalChannel(rank+1);
-client_createThread(1, 100, rank + 1, nextCore);
+client_createThread(0, 100, rank + 1, nextCore);
 
         	channelListen(childch);
 		if(rank!=0) doneSignal = channelReceiveWord(parentCommunicationChannel);
@@ -216,7 +209,7 @@ client_createThread(1, 100, rank + 1, nextCore);
 
 	else{
 		
-		unsigned result[IMG_LENGTH][IMG_WIDTH];
+		unsigned result[IMG_LENGTH_BLUR][IMG_WIDTH_BLUR];
 		channel dest = 0;		
 		channel parentCommunicationChannel,rootCommunicationChannel;
 		unsigned doneSignal;
@@ -255,11 +248,11 @@ Comptime = 0;
 
         t:> time1;
 
-		for(i = 0; i < IMG_WIDTH; i++){
-			for(j = 0; j < IMG_LENGTH; j++){
+		for(i = 0; i < IMG_WIDTH_BLUR; i++){
+			for(j = 0; j < IMG_LENGTH_BLUR; j++){
 				printer[j] = result[i][j];
 			}
-			//printMany(IMG_LENGTH,printer);
+			//printMany(IMG_LENGTH_BLUR,printer);
 		}
 
 		t :> time2;
@@ -284,10 +277,9 @@ channelSendWord(rootCommunicationChannel,42);
 	}
 	
 
-	//printer[0] = 1000*(Comptime/(Comptime + Commtime));
-	printer[0] = time_end - time_start;
+	//printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
+	//printer[0] = Comptime + Commtime;
 
 	//Insert Printing Here
-if(rank==3) printMany(1,printer);
 
 }

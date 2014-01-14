@@ -214,8 +214,8 @@ void nOS_start(chanend c_in,chanend c_out, unsigned initialFreqDivider)
 //	printhexln(stackSize) ; */
 
 
-	setFreqDivider(initialFreqDivider,42) ;
-	enableAEC(STANDBY_CLOCK_DIVIDER) ;
+	setFreqDivider(0,42) ;
+	//enableAEC(STANDBY_CLOCK_DIVIDER) ;
 
 
 

@@ -14,7 +14,7 @@
 unsigned getStartAddress(unsigned index)
 {
 	void (*starts[NUMBEROFSTARTS])(unsigned,unsigned) ; // void (void) function pointer
-	starts[0] = prim_child; 
+	starts[0] = blur_child; 
 	starts[1] = sobel_child; 
 	
 	

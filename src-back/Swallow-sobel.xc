@@ -65,10 +65,10 @@ void sobel_main(chanend c_in, unsigned shouldIRun){
 
 
 //Insert core_list Here
-core_list_sobel[0] = 4;
-core_list_sobel[1] = 5;
-core_list_sobel[2] = 6;
-core_list_sobel[3] = 7;
+core_list_sobel[0] = 24;
+core_list_sobel[1] = 25;
+core_list_sobel[2] = 26;
+core_list_sobel[3] = 27;
 
     myID = get_logical_core_id();
 
@@ -393,8 +393,8 @@ Comptime += time2-time1;
 
 t :> time_end;
 
-//printer[0] = time_end-time_start;
-printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
+printer[0] = Comptime + Commtime;
+//printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
 
 //Do print here
 if(rank==3) printMany(1,printer);

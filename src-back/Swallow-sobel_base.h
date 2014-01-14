@@ -1,8 +1,8 @@
 #ifndef SWALLOW_SOBEL_H_
 #define SWALLOW_SOBEL_H_
 
-#define IMG_WIDTH_SOBEL 16
-#define IMG_LENGTH_SOBEL 12
+#define IMG_WIDTH_SOBEL 8
+#define IMG_LENGTH_SOBEL 6
 
 #define DIV_DEGREE_X_SOBEL 4 // the degree to which the image is divided along each dimension (can only result in a square number of small images)
 #define DIV_DEGREE_Y_SOBEL 3

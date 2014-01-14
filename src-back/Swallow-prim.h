@@ -15,7 +15,6 @@
 #define chanend unsigned
 #endif
 void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel);
-void startSync(chanend c_out);
 void xc_listen_check_wall(unsigned parentCommunicationChannel, unsigned rank, chanend north,chanend east,chanend south,chanend west,chanend com_channel,chanend consensus_channel);
 void xc_prim_child_root(unsigned rank, chanend com_channel);
 void setFreqDivider(unsigned divider,unsigned rank);
@@ -34,7 +33,6 @@ unsigned exor(unsigned vis1, unsigned vis2, unsigned num_touched);
 void xc_prim_child_root(unsigned rank, unsigned com_channel);
 void xc_getCompletedSignal(unsigned child_channels[]);
 void prim_main(unsigned c_in, unsigned c_out, unsigned shouldIRun, unsigned control_channel);
-void startSync(unsigned c_out);
 void xc_listen_check_wall(unsigned parentCommunicationChannel, unsigned rank, unsigned north, unsigned east, unsigned south, unsigned west,unsigned com_channel,unsigned consensus_channel);
 unsigned tally_votes(unsigned status[],unsigned flags[],unsigned rank);
 void send_word(unsigned id, unsigned value);

@@ -1,8 +1,8 @@
 #ifndef SWALLOW_SOBEL_H_
 #define SWALLOW_SOBEL_H_
 
-#define IMG_WIDTH_SOBEL 8
-#define IMG_LENGTH_SOBEL 8
+#define IMG_WIDTH_SOBEL 4
+#define IMG_LENGTH_SOBEL 4
 
 #define DIV_DEGREE_X_SOBEL 2
 #define DIV_DEGREE_Y_SOBEL 2
@@ -13,14 +13,12 @@
 #define chanend unsigned
 #endif
 void sobel_main(chanend c_in, unsigned shouldIRun);
-void startSync(chanend c_out);
 #ifdef chanend
 #undef chanend
 #endif
 void xc_sobelSelect(chanend c[],unsigned processed_image[][IMG_LENGTH_SOBEL+2]);
 #else
 void sobel_main(unsigned c_in, unsigned shouldIRun);
-void startSync(unsigned c_out);
 void xc_sobelSelect(unsigned c[],unsigned processed_image[][IMG_LENGTH_SOBEL+2]);
 #endif
 
