@@ -821,11 +821,12 @@ south_connection :> yay;
 	  walls[num_walls] = rank;
 t :> time_end;
   // printer[0] = rank;
-   printer[1] = time_end-time_begin;
+   //printer[1] = time_end-time_begin;
    printer[2] = 0xbadbead;
    printer[3] = sum*counter;
    printer[4] = 0xbadbeef;
    printer[5] = sum2*counter2;
+   printer[1] = printer[3] + printer[5];
   //printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
   //printer[0] = printer[1];
 

@@ -6,9 +6,9 @@ from tempfile import mkstemp
 outputfile = "results.csv"
 outputreadfile = "print_output.txt"
 
-PARENTCORE_PRIM = 5
-PARENTCORE_SOBEL = 4
-PARENTCORE_BLUR = 6
+PARENTCORE_PRIM = 21
+PARENTCORE_SOBEL = 20
+PARENTCORE_BLUR = 22
 PARENTCORE_MERGESORT = 1
 PARENTCORE_ID = 1
 
@@ -37,8 +37,9 @@ MCMAIN_PATH = "mcmain.xc"
 MCMAIN_BASE_PATH = "mcmain_base.xc"
 BUILDFILE_BASE = "build_base"
 BUILDFILE = "build"
-
-MAXCORES = 16
+POWERCORE = 17
+MAXCORES = 32
+SYNCCORE = 0 # So far, this can only be 0
 
 def editFile(x):
 
@@ -68,7 +69,7 @@ def getReplacementsBlur(typeofEditing):
         return {
             'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
             'ratio' : {'//printer[0] = 1000*((double)Comptime':'printer[0] = 1000*((double)Comptime'},
-            'time'  : {'//printer[0] = time_end':'printer[0] = time_end'},
+            'time'  : {'//printer[0] = Comptime':'printer[0] = Comptime'},
             'none'  : {}
             }.get(typeofEditing,{'//control_channel':'control_channel', '//printMany(8':'printMany(8'})
 
@@ -76,7 +77,7 @@ def getReplacementsSobel(typeofEditing):
         return {
             'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
             'ratio' : {'//printer[0] = 1000*((double)Comptime':'printer[0] = 1000*((double)Comptime'},
-            'time'  : {'//printer[0] = time_end':'printer[0] = time_end'},
+            'time'  : {'//printer[0] = Comptime':'printer[0] = Comptime'},
             'none'  : {}
             }.get(typeofEditing,{'//control_channel':'control_channel', '//printMany(8':'printMany(8'})
 
@@ -433,9 +434,9 @@ def editSobelHeader(coreList,appList):
         elif match_children in line:
             newFile.write(match_children + str(numChildren) + "\n")
         elif match_width in line:
-            newFile.write(match_width + str(div_x*4) + "\n")
+            newFile.write(match_width + str(div_x*2) + "\n")
         elif match_length in line:
-            newFile.write(match_length + str(div_y*4) + "\n")
+            newFile.write(match_length + str(div_y*2) + "\n")
         elif match_header_xc in line:
             if appList.index("sobel") == 0:
                 if len(appList) == 1:
@@ -517,6 +518,8 @@ def editMCMain_initialFunctions(appList,parentCores):
     global INITIALFUNCTIONS_PATH_BASE
     global INITIALFUNCTIONS_PATH
     global MAXCORES
+    global POWERCORE
+    global SYNCCORE
 
     cur_line = 0
     next_line = 0
@@ -544,21 +547,27 @@ def editMCMain_initialFunctions(appList,parentCores):
             while(cur_line < MAXCORES):
                 newFile.write("\n")
                 newFile.write("\n")
-                if z < len(sortedcores) or cur_line < 2:
-                    if cur_line != sortedcores[z] and cur_line > 1:
-                        newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(sortedcores[z]) + " ; i += 1) {\n")
+                if z < len(sortedcores) or cur_line == SYNCCORE or cur_line==POWERCORE:
+                    if cur_line != sortedcores[z] and cur_line != SYNCCORE and cur_line != POWERCORE :
+                        if POWERCORE > cur_line:
+                            next_line = POWERCORE
+                        else:
+                            next_line = sortedcores[z]
+
+                        newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(next_line) + " ; i += 1) {\n")
                         newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
-                        next_line = sortedcores[z]
-                    elif cur_line == 0:
-                        newFile.write("\tpar (int i = 0 ; i < 1 ; i += 1) {\n")
+                        
+                    elif cur_line == SYNCCORE:
+                        newFile.write("\tpar (int i = " + str(SYNCCORE) + " ; i < " + str(SYNCCORE+1) + " ; i += 1) {\n")
                         newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
                         newFile.write("\ton stdcore[i] : startSync(c[i]) ;\n")
-                        next_line = 1
-                    elif(cur_line == 1):
-                        newFile.write("\tpar (int i = 1 ; i < 2 ; i += 1) {\n")
+
+                        next_line = cur_line+1
+                    elif(cur_line == POWERCORE):
+                        newFile.write("\tpar (int i = " + str(POWERCORE) + " ; i < " + str(POWERCORE+1) + " ; i += 1) {\n")
                         newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
                         newFile.write("\ton stdcore[i] : powerMeasure(k) ;\n")
-                        next_line = 2
+                        next_line = cur_line+1
                     else:
                         newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(cur_line+1) + " ; i += 1) {\n")
                         newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
@@ -691,6 +700,7 @@ def runExperiments(appList,coreNums):
     global PARENTCORE_SOBEL
     global PARENTCORE_PRIM
     global PARENTCORE_MERGESORT
+    global MAXCORES
 
     indices = [0] * 3
     states = ["none","none","none","none"]
@@ -725,20 +735,20 @@ def runExperiments(appList,coreNums):
 
     currentInd = lastInd - 1
 
-    if lastInd >=3:
-        lim3 = upperBound - cores[2] + 1
-    else:
-        lim3 = 1
+    #if lastInd >=3:
+    #    lim3 = upperBound - cores[2] + 1
+   # else:
+    lim3 = 1
 
-    if lastInd >=2:
-        lim2 = upperBound - cores[1] + 1
-    else:
-        lim2 = 1
+   # if lastInd >=2:
+   #     lim2 = upperBound - cores[1] + 1
+   # else:
+    lim2 = 1
 
-    if lastInd >=1 and primflag == 0:
-        lim1 = upperBound - cores[0] + 1
-    else:
-        lim1 = 1
+   # if lastInd >=1 and primflag == 0:
+   #     lim1 = upperBound - cores[0] + 1
+   # else:
+    lim1 = 1
 
     for i in xrange(lim1):
         indices[0] = i
@@ -751,16 +761,18 @@ def runExperiments(appList,coreNums):
                 coreList = []
                 parentcores =[]
                 if any("prim" in s for s in appList):
-                    coreList.append(range(8,8+coreNums[appList.index("prim")]))
+                    coreList.append(range(8+MAXCORES-16,8+MAXCORES-16+coreNums[appList.index("prim")]))
+                   # coreList.append([24,24,24,24])
                     apps.append("prim")
                     parentcores.append(PARENTCORE_PRIM)
                 if any("blur" in s for s in appList):
-                    #coreList.append([12,12,12,12])
-                    coreList.append(range(8+indices[appinds[0]],8+indices[appinds[0]]+coreNums[appList.index("blur")]))
+                   # coreList.append([25,25,25,25])
+                    coreList.append(range(8+MAXCORES-16+indices[appinds[0]],8+MAXCORES-16+indices[appinds[0]]+coreNums[appList.index("blur")]))
                     apps.append("blur")
                     parentcores.append(PARENTCORE_BLUR)
                 if any("sobel" in s for s in appList):
-                    coreList.append(range(8+indices[appinds[1]],8+indices[appinds[1]]+coreNums[appList.index("sobel")]))
+                    coreList.append(range(8+MAXCORES-16+indices[appinds[1]],8+MAXCORES-16+indices[appinds[1]]+coreNums[appList.index("sobel")]))
+                    #coreList.append([10,10,10,10])
                     apps.append("sobel")
                     parentcores.append(PARENTCORE_SOBEL)
                 if any("mergesort" in s for s in appList):
@@ -905,8 +917,8 @@ def main():
 
     #applications.append("prim")
     applications.append("sobel")
-    #applications.append("blur")
-    numCores = [4]
+    applications.append("blur")
+    numCores = [4,4]
 
 
     mode = "append+"

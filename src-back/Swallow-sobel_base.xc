@@ -388,7 +388,7 @@ Comptime += time2-time1;
 
 t :> time_end;
 
-//printer[0] = time_end-time_start;
+//printer[0] = Comptime + Commtime;
 //printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
 
 //Do print here

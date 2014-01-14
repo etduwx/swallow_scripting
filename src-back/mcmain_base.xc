@@ -25,7 +25,7 @@
 #include "Power_Measure_Lib.h"
 #include "Swallow-sobel.h"
 
-#define NCORES (16)
+#define NCORES (32)
 int main(void)
 {
 	chan c[NCORES+1];
