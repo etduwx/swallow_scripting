@@ -51,10 +51,10 @@ void listen_check_wall(unsigned parent_id, unsigned rank){
 	delay_execution(STARTDELAY);
 
 	//Insert core_list Here
-core_list_prim[0] = 24;
-core_list_prim[1] = 25;
-core_list_prim[2] = 26;
-core_list_prim[3] = 27;
+core_list_prim[0] = 28;
+core_list_prim[1] = 29;
+core_list_prim[2] = 30;
+core_list_prim[3] = 31;
 
 
 	if(rank/DIV_DEGREE_PRIM_X != DIV_DEGREE_PRIM_Y - 1) 

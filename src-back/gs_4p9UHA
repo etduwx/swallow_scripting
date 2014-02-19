@@ -1,0 +1,164 @@
+#include <xs1.h>
+    .core "XS1"
+    .corerev "REVB"
+    .globl main,"f{si}(0)"
+    .globl _start
+    .extern exit,"f{0}(si)"
+    .text
+    .align 2
+    .type main, @function
+_start:
+main:
+  ldc     r0, 0
+  ldc     r1, 0
+  ldc     r2, 0
+  ldc     r3, 0
+  ldc     r4, 0
+  ldc     r5, 0
+  ldc     r6, 0
+  ldc     r7, 0
+  ldc     r8, 0
+  ldc     r9, 0
+  ldap    r11, _cp
+  set     cp, r11
+  ldap    r11, _dp
+  set     dp, r11
+  ldc     r11, 11
+  get     r10, ps[r11]
+  ldc     r11, 0x2000
+  add     r11, r11, r10
+  set     sp, r11
+  ldc     r0, 7
+  ldc     r1, 0x0000
+  ldc     r2, 0x00
+  bl      progSwitchRegBlind
+    ldc   r0, 5
+    ldc   r1, 0x0000
+    ldc   r2, 0x0000
+    bl    progSwitchRegBlind
+.LgetAllChannels:
+    getr    r0, 2
+    bt      r0, .LgetAllChannels
+    ldc     r2, 31
+    ldc     r3, 1
+    ldc     r1, 256
+    ldw     r0, cp[thisChanendZero]
+    add     r0, r0, r1
+.LfreeAllChannels:
+    freer   res[r0]
+.LskipFree:
+    add     r0, r0, r1
+    eq      r4, r3, r2
+    add     r3, r3, 1
+    bf      r4, .LfreeAllChannels
+    ldc   r5, 0x80
+    ldc   r6, 0x88
+disableLinks:
+    mov   r0, r5
+    ldc   r1, 0x0000
+    ldc   r2, 0
+    bl    progSwitchRegBlind
+    add   r5, r5, 1
+    eq    r0, r5, r6
+    bf    r0, disableLinks
+    ldc   r0, 0x82
+    ldc   r1, 0x0000
+    ldw   r2, dp[treeLinkProgVal2]
+    bl    progSwitchRegBlind
+    .section .dp.data,"adw", @progbits
+    .align 4
+treeLinkProgVal2:
+    .word 0x80004008
+    .text
+setDimensionReg:
+    ldc   r0, 0x0c
+    ldc   r1, 0x0000
+    ldc   r2, 0x0000
+    bl    progSwitchRegBlind
+    ldc   r0, 0x0d
+    ldw   r2, dp[dirBits1]
+    .section .dp.data,"adw", @progbits
+    .align 4
+dirBits1:
+    .word 0xf0000000
+    .text
+    bl    progSwitchRegBlind
+sayHello2:
+    ldc   r0, 0x0022
+    ldc   r1, 0x0000
+    ldc   r2, 0x0f00
+    bl    progSwitchRegBlind
+    ldc   r0, 0x0082
+    ldw   r2, dp[treeLinkProgVal2]
+    mkmsk r3, 1
+    ldc   r5, 24
+    shl   r3, r3, r5
+    or    r2, r2, r3
+    bl    progSwitchRegBlind
+finish:
+  ldc     r0, 7
+  ldc     r1, 0
+  ldc     r2, 0
+  ldc     r3, 0
+doDoSyscall:
+  bl      _DoSyscall
+  bu      doDoSyscall
+progSwitchRegBlind:
+    ldw     r11, dp[ssctrlAddrWord]
+    shl     r3, r1, 16
+    or      r11, r3, r11
+    getr    r3, 2
+    setd    res[r3], r11
+    ldc     r11, 192
+    outct   res[r3], r11
+    ldc     r11, 5
+    eq      r11, r11, r0
+    bt      r11, retIsValue
+    shr     r11, r1, 8
+    outt    res[r3], r11
+    outt    res[r3], r1
+    bu      retSent
+retIsValue:
+    shr     r11, r2, 8
+    outt    res[r3], r11
+    outt    res[r3], r2
+retSent:
+    ldc     r11, 0xff
+    outt    res[r3], r11
+    shr     r11, r0, 8
+    outt    res[r3], r11
+    outt    res[r3], r0
+    out     res[r3], r2
+    outct   res[r3], 1
+    freer   res[r3]
+    retsp 0
+readSwitchReg:
+    ldw     r11, dp[ssctrlAddrWord]
+    shl     r3, r2, 16
+    or      r11, r3, r11
+    getr    r3, 2
+    setd    res[r3], r11
+    ldc     r11, 193
+    outct   res[r3], r11
+    shr     r11, r3, 24
+    outt    res[r3], r11
+    shr     r11, r3, 16
+    outt    res[r3], r11
+    shr     r11, r3, 8
+    outt    res[r3], r11
+    shr     r11, r1, 8
+    outt    res[r3], r11
+    outt    res[r3], r1
+    outct   res[r3], 1
+    chkct   res[r3], 3
+    in      r0, res[r3]
+    chkct   res[r3], 1
+    freer   res[r3]
+    retsp 0
+    .section .dp.data,"adw", @progbits
+    .align 4
+ssctrlAddrWord:
+    .word 0x0000c30c
+thisChanendZero:
+    .word   0x00000002
+    .text

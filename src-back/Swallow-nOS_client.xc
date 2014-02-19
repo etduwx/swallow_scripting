@@ -1,23 +1,186 @@
 #include <xs1.h>
 #include <print.h>
 #include <math.h>
+#include <stdlib.h>
 #include "Swallow-helpers.h"
 #include "Swallow-nOS_asm.h"
 #include "Swallow-nOS.h"
 #include "Swallow-nOS_initialFunctions.h"
 #include "Swallow-nOS_client.h"
+#include "swallow_comms.h"
 
-
-
+#define THRESHOLD 3 //threshold for creating a thread on current tile without checking neighbors
 #define LOCALnOSCHANEND 0x1f02 // hard-coded for core[0] only. TODO: generalise
+#define MAXSEARCHDIST 3
 
 // specify the start address, stack size, rank and the tile (by index) to allocate the thread on
+#pragma stackfunction 3000
+unsigned client_createThreadDynamic(unsigned startAddress,unsigned childRank,unsigned depth, unsigned go_deeper,unsigned coreNo)
+{
+	unsigned myCore = get_local_tile_id();
+	unsigned threadCore;
+	unsigned myThread = get_logical_core_id();
+	unsigned myID = (myCore << 16) | myThread;
+	unsigned col,row, coreNum;
+	unsigned neighbouringActivity[3],neighbouringCores[3],numNeighbours;
+	unsigned searchDeeper = 0;
+	unsigned minimum,smallest;
+	unsigned printer[5];
+	unsigned mylogicore,comp;
+
+
+	col = (myCore >> SWXLB_LPOS) & 0x03;
+	row = (myCore >> SWXLB_VPOS);
+	coreNum = sw_ncols*row + col;
+
+	mylogicore = coreNum;
+
+if(depth > 0)
+{
+	coreNum = coreNo;
+	col = coreNum % sw_ncols;
+	row = coreNum / sw_ncols;
+}
+	
+	
+	if(depth==0 && (client_getThreadStatus(coreNum) <= THRESHOLD)){
+		//printer[0] = childRank;
+		//printer[1] = coreNum;
+		//printMany(2,printer);
+		return nOS_requestAction((nodeIndexToId(coreNum) | LOCALnOSCHANEND), nOS_createThread_action, myID, startAddress, childRank) ;
+	}
+
+	if(go_deeper == 0 && depth > 0) return client_getThreadStatus(coreNum);
+
+
+	for(unsigned i = 0;i<3;i++){
+		neighbouringActivity[i] = 1000; // initialize to "failure"
+	}
+
+	searchDeeper = 0;
+
+	while(go_deeper == 1){
+		numNeighbours = 0;
+		switch(col){
+			case 0: //look up, down, right
+				neighbouringCores[numNeighbours] = coreNum + 1;
+				neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking right
+				numNeighbours +=1;
+				if(row>0){
+					neighbouringCores[numNeighbours] = coreNum - sw_ncols;
+					neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking up
+					numNeighbours += 1;
+				}
+				if(row<sw_nrows-1){
+					neighbouringCores[numNeighbours] = coreNum + sw_ncols;
+					neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking down
+					numNeighbours += 1;
+				}
+				break;
+			case 1: //two over right and left
+				neighbouringCores[numNeighbours] = coreNum + 2;
+				neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking right
+				numNeighbours +=1;
+				
+				neighbouringCores[numNeighbours] = coreNum - 1;
+				neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking up
+				numNeighbours += 1;
+				break;
+			case 2: //up,down,right
+				neighbouringCores[numNeighbours] = coreNum + 1;
+				neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking right
+				numNeighbours +=1;
+				if(row>0){
+					neighbouringCores[numNeighbours] = coreNum - sw_ncols;
+					neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking up
+					numNeighbours += 1;
+				}
+				if(row<sw_nrows-1){
+					neighbouringCores[numNeighbours] = coreNum + sw_ncols;
+					neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking down
+					numNeighbours += 1;
+				}
+				break;
+			case 3: //two over left and left
+				neighbouringCores[numNeighbours] = coreNum - 2 ;
+				neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking right
+				numNeighbours +=1;
+				
+				neighbouringCores[numNeighbours] = coreNum - 1;
+				neighbouringActivity[numNeighbours] = client_createThreadDynamic(startAddress,childRank,depth+1,searchDeeper,neighbouringCores[numNeighbours]); // looking up
+				numNeighbours += 1;
+
+				break;
+		}
+
+		minimum = 0xffffffff;
+
+		for (unsigned i=0;i<numNeighbours;i++){
+			if (neighbouringActivity[i] < minimum){
+				minimum = neighbouringActivity[i];
+				smallest = i;
+			}
+		}
+
+if(searchDeeper == 0){
+		if(minimum <= THRESHOLD){
+			if(depth==0){
+				coreNum = neighbouringCores[smallest];  
+				break; 
+			}
+			else
+			{
+			return (neighbouringActivity[smallest] << 8) | neighbouringCores[smallest];
+			}
+		}
+		else{
+			searchDeeper = 1;
+		}
+	}
+	else{
+		if(depth == 0){
+			coreNum = neighbouringActivity[smallest] & 0xff;
+			break;
+		}
+		else
+			return neighbouringActivity[smallest] & 0xff;
+	}
+
+}
+  //printer[0] = childRank;
+	//printer[1] = coreNum;
+	//printMany(2,printer);
+	return nOS_requestAction((nodeIndexToId(coreNum) | LOCALnOSCHANEND), nOS_createThread_action, myID, startAddress, childRank) ;
+
+}
+
+unsigned client_createThreadRandom(unsigned startAddress, unsigned childRank,unsigned min,unsigned max){
+
+	unsigned myCore = get_local_tile_id() ;    // returns node ID
+	unsigned myThread = get_logical_core_id() ;  // returns 0--7
+	unsigned myID = (myCore << 16) | myThread ;   // a unique ID for this thread
+	unsigned range = max-min;
+	//unsigned printer[2];
+	unsigned targetCore;
+
+	//printer[0] = childRank;
+	targetCore = min + (rand() % range);
+	//printer[1] = targetCore;
+	//printMany(2,printer);
+
+	return nOS_requestAction((nodeIndexToId(targetCore) | LOCALnOSCHANEND), nOS_createThread_action, myID, startAddress, childRank) ;
+
+}
+
 unsigned client_createThread(unsigned startAddress, unsigned stackSize, unsigned childRank, unsigned tileIndex)
 {
 	unsigned myCore = get_local_tile_id() ;    // returns node ID
 	unsigned myThread = get_logical_core_id() ;  // returns 0--7
 	unsigned myID = (myCore << 16) | myThread ;   // a unique ID for this thread
+	
 	//return nOS_requestAction(LOCALnOSCHANEND, nOS_createThread_action, myID, startAddress, childRank) ;
+
+
 	
 	return nOS_requestAction((nodeIndexToId(tileIndex) | LOCALnOSCHANEND), nOS_createThread_action, myID, startAddress, childRank) ;
 	/* unsigned destTile ;
@@ -53,6 +216,7 @@ unsigned client_createThread(unsigned startAddress, unsigned stackSize, unsigned
 
 	return nOS_requestAction((destTile | LOCALnOSCHANEND), nOS_createThread_action, myID, startAddress, childRank) ; */
 }
+
 
 channel client_connectNewLocalChannel(unsigned channelIndex, endpoint destination)
 {

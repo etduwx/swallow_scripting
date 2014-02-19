@@ -13,9 +13,11 @@
 #include "Power_Measure_Lib.h"
 #define LOCALnOSCHANEND 0x1f02
 
-
 void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
-	double tempor;
+	unsigned sampleCount ;
+	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
+	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
+	unsigned P_T, P_MT, P_MB, P_B, P_DRAM, P_IO ;
 	unsigned time1,time2;
 	timer t;
 	unsigned foo;
@@ -32,9 +34,9 @@ void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 
 	//Chan in-outs here
 
-
-	parentch = client_allocateNewLocalChannel(0);
-	doneSignal = client_allocateNewLocalChannel(1);
+	parentch = client_allocateNewLocalChannel(0) ;
+	doneSignal = client_allocateNewLocalChannel(1) ;
+	
 	//client_createThread(0, 100, 0, coreList[0]);
 
 	channelListen(parentch);
@@ -46,6 +48,7 @@ void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 				image[i][j] = 1;
 			}
 		}
+
 	for(x = 0; x < (XFACTOR * YFACTOR); x++){
 		for(i = 0; i < YDIV; i++){
 			for(j = 0; j < XDIV; j++){
@@ -69,20 +72,35 @@ void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	printer[0] = time2-time1;
 	//if(foo==42) printMany(1,printer);
 	
-	if(foo==42){
+	
 		//control_channel <: (char) POWERMEASURE_STOP;
 		//control_channel <: (char) POWERMEASURE_READVALUES;
 	
-		//control_channel :> printer[0];
+/*if(foo==42){
 
-		for(unsigned k =1; k < 8; k++){
-			//control_channel :> tempor;
+		control_channel :> sampleCount;
+		control_channel :> V_T ;
+		control_channel :> I_T ;
+		control_channel :> V_MT ;
+		control_channel :> I_MT ;
+		control_channel :> V_MB ;
+		control_channel :> I_MB ;
+		control_channel :> V_B ;
+		control_channel :> I_B ;
+		control_channel :> V_IO ;
+		control_channel :> I_IO ;
+		control_channel :> V_DRAM ;
+		control_channel :> I_DRAM ;
 
-			printer[k] = (tempor*1000/(double) printer[0]) ;
-		}
-		//printMany(8, printer);
+		printer[0] = sampleCount;
+		printer[1] = (V_T / sampleCount) * (I_T / sampleCount) / 1000;
+		printer[2] = (V_MT / sampleCount) * (I_MT / sampleCount) / 1000;
+		printer[3] = (V_MB / sampleCount) * (I_MB / sampleCount) / 1000;
+		printer[4] = (V_B / sampleCount) * (I_B / sampleCount) / 1000;
+
+		printMany(8, printer);
 		
-	}
+	} */ //uncomment for power
 }
 
 void blur_child(unsigned parent_id, unsigned rank){
@@ -117,9 +135,7 @@ Comptime = 0;
 		parentCommunicationChannel = client_lookupParentChanend(parent_id, rank);
 		parentCommunicationChannel = client_connectNewLocalChannel(1, parentCommunicationChannel);
 
-
 		//Put Switch Statement Under Here
-
 
 		childch = client_allocateNewLocalChannel(rank+1);
         	client_createThread(0, 100, rank + 1, nextCore);
@@ -151,7 +167,6 @@ Comptime = 0;
 			t :> time2;
 		
 			Commtime += time2 - time1;
-			
 
 			t :> time1;
 			for(i = 0; i < YDIV; i++){
@@ -173,7 +188,6 @@ Comptime = 0;
 			
 			Comptime += time2-time1;
 			
-
 			t:> time1;
 			for(i = 0; i < YDIV; i++){
 				for(j = 0; j <XDIV; j++){
@@ -187,11 +201,6 @@ Comptime = 0;
 			
 			count++;
 		}
-
-		
-		
-
-		
 
 		client_releaseLocalChannel(rank+1);
 

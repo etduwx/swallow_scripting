@@ -6,9 +6,9 @@ from tempfile import mkstemp
 outputfile = "results.csv"
 outputreadfile = "print_output.txt"
 
-PARENTCORE_PRIM = 21
-PARENTCORE_SOBEL = 20
-PARENTCORE_BLUR = 22
+PARENTCORE_PRIM = 19
+PARENTCORE_SOBEL = 21
+PARENTCORE_BLUR = 20
 PARENTCORE_MERGESORT = 1
 PARENTCORE_ID = 1
 
@@ -59,7 +59,7 @@ def editFile(x):
 
 def getReplacementsPrims(typeofEditing):
         return {
-            'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
+            'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8','/*if(foo==42){':'if(foo==42){','} */ //uncomment for power':'}'},
             'ratio' : {'//printer[0] = 1000*':'printer[0] = 1000*'},
             'time'  : {'//printer[0] = printer[1]':'printer[0] = printer[1]'},
             'none'  : {}
@@ -67,15 +67,16 @@ def getReplacementsPrims(typeofEditing):
 
 def getReplacementsBlur(typeofEditing):
         return {
-            'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
-            'ratio' : {'//printer[0] = 1000*((double)Comptime':'printer[0] = 1000*((double)Comptime'},
+            'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8','/*if(foo==42){':'if(foo==42){','} */ //uncomment for power':'}'},
+            #'ratio' : {'//printer[0] = 1000*((double)Comptime':'printer[0] = 1000*((double)Comptime'},
+            'ratio' : {'//printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));':'printer[0] = Comptime;'},
             'time'  : {'//printer[0] = Comptime':'printer[0] = Comptime'},
             'none'  : {}
             }.get(typeofEditing,{'//control_channel':'control_channel', '//printMany(8':'printMany(8'})
 
 def getReplacementsSobel(typeofEditing):
         return {
-            'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8'},
+            'power' : {'//control_channel':'control_channel', '//printMany(8':'printMany(8','/*if(foo==42){':'if(foo==42){','} */ //uncomment for power':'}'},
             'ratio' : {'//printer[0] = 1000*((double)Comptime':'printer[0] = 1000*((double)Comptime'},
             'time'  : {'//printer[0] = Comptime':'printer[0] = Comptime'},
             'none'  : {}
@@ -711,7 +712,6 @@ def runExperiments(appList,coreNums):
     curLastind = 0
     primflag = 0
     
-
     if any("prim" in s for s in appList):
         lastInd += 1
         cores[curLastind] = coreNums[appList.index("prim")]
@@ -761,18 +761,18 @@ def runExperiments(appList,coreNums):
                 coreList = []
                 parentcores =[]
                 if any("prim" in s for s in appList):
-                    coreList.append(range(8+MAXCORES-16,8+MAXCORES-16+coreNums[appList.index("prim")]))
-                   # coreList.append([24,24,24,24])
+                    #coreList.append(range(8+MAXCORES-16,8+MAXCORES-16+coreNums[appList.index("prim")]))
+                    coreList.append([28,29,30,31])
                     apps.append("prim")
                     parentcores.append(PARENTCORE_PRIM)
                 if any("blur" in s for s in appList):
-                   # coreList.append([25,25,25,25])
-                    coreList.append(range(8+MAXCORES-16+indices[appinds[0]],8+MAXCORES-16+indices[appinds[0]]+coreNums[appList.index("blur")]))
+                    coreList.append([23,24,25,26])
+                    #coreList.append(range(8+MAXCORES-16+indices[appinds[0]],8+MAXCORES-16+indices[appinds[0]]+coreNums[appList.index("blur")]))
                     apps.append("blur")
                     parentcores.append(PARENTCORE_BLUR)
                 if any("sobel" in s for s in appList):
-                    coreList.append(range(8+MAXCORES-16+indices[appinds[1]],8+MAXCORES-16+indices[appinds[1]]+coreNums[appList.index("sobel")]))
-                    #coreList.append([10,10,10,10])
+                    #coreList.append(range(8+MAXCORES-16+indices[appinds[1]],8+MAXCORES-16+indices[appinds[1]]+coreNums[appList.index("sobel")]))
+                    coreList.append([23,24,25,26,20,21,22,27,28,29,30,31])
                     apps.append("sobel")
                     parentcores.append(PARENTCORE_SOBEL)
                 if any("mergesort" in s for s in appList):
@@ -875,7 +875,7 @@ def parseOutput(outputType,threadNum,coreAppIndex):
     readFile.close()
 
     for i in xrange(len(outputs)):
-        if outputType == "ratio":
+        if outputType == "ratiodd":
             temporary = float(float(int(outputs[i],16))/float(1000))
         else:
             temporary = int(outputs[i],16)
@@ -917,14 +917,13 @@ def main():
 
     #applications.append("prim")
     applications.append("sobel")
-    applications.append("blur")
-    numCores = [4,4]
-
+   # applications.append("blur")
+    numCores = [12]
 
     mode = "append+"
 
     if mode == "append+":
-        f = open(outputfile,'a')
+        f = open(outputfile,'a+')
         f.write('\n')
         f.close()
     elif mode == "new":
@@ -933,6 +932,7 @@ def main():
         f = open(outputfile,'w+')
         f.write("Application 1, Application 2, Application 3, Cores App 1, Cores App 2, Cores App 3, Parent Core App 1, Parent Core App 2, Parent Core App 3, Power Stripe 1, Power Stripe 2, Power Stripe 3, Power Stripe 4, Ratio App 1, Avg. Ratio 1, Time App 1, Avg. Time 1, Ratio App 2, Avg. Ratio 2, Time App 2, Avg. Time 2, Ratio App 3, Avg. Ratio 3, Time App 3, Avg. Time 3 \n")
         f.close()
+
 
     
     runExperiments(applications,numCores)

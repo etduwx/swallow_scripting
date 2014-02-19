@@ -1,86 +1,77 @@
 #include <platform.h>
 #include <xs1.h>
+#include "Swallow-helpers.h"
 #include <xclib.h> // for bitrev(), byterev()
 #include <print.h>
-#include "swallow_comms.h" 
-#include "Swallow-helpers.h"
 
 out port sclk = XS1_PORT_1K ;
 out port cs_n = XS1_PORT_1H ;
 out port adc_address = XS1_PORT_8C ;
 in buffered port:32 din_a = XS1_PORT_1E ; // can be 1, 8 or 32 bits of serialisation
 in buffered port:32 din_b = XS1_PORT_1A ;
-clock sclk_clk = XS1_CLKBLK_3 ;
+
+clock sclk_clk = XS1_CLKBLK_1 ;
 
 out port r_wn = XS1_PORT_1J ;
-//on stdcore[2] : out port core2led = XS1_PORT_1I ;
+out port core2led = XS1_PORT_1I ;
 
-
-
-// set Port 8C as active, disabling Ports 4E and 4F in the process 
-void configPort8C()
-{
-	unsigned theport, command ;
-
-	theport = 0x40400 ; //PORT_4E ;	
-	command = 0x0 ; // not in use
-	asm("setc res[%0], %1" : : "r"(theport), "r"(command)) ; // set not in use
-	theport = 0x40500 ; //PORT_4F ;
-	asm("setc res[%0], %1" : : "r"(theport),"r"(command)) ; // set not in use
-	theport = 0x80200 ; //PORT_8C ;
-	command = 0x08 ; // in use
-	asm("setc res[%0], %1" : : "r"(theport), "r"(command)) ; // set in use
+/*
+// debug
+void xscope_user_init(void) {
+  xscope_register(0);
+  xscope_config_io(XSCOPE_IO_BASIC);
 }
+*/
+
+// AEC Code
+//// Set xCORE tile standby clock to 100MHz from 500MHz System frequency
+//#define STANDBY_CLOCK_DIVIDER (5-1)
+// Set xCORE tile standby clock to 100MHz from 500MHz System frequency
+#define STANDBY_CLOCK_DIVIDER (100)
+#define XCORE_CTRL0_CLOCK_MASK 0x30
+#define XCORE_CTRL0_ENABLE_AEC 0x30
 /*
  * Resistors on Swallow supplies are 0R1
  * Amp is 20x
  * ADC has 12 bits of resolution
  * ADC Vref = 2.5V
  */
-#define VSCALINGFACTOR (2.5 / 4096)
-#define ISCALINGFACTOR ((10 * (2.5 / 4096)) / 20)
+#define VSCALINGFACTOR 625
 
-
+#define POWERMEASURE_IDLE 0
 #define POWERMEASURE_START 1
 #define POWERMEASURE_STOP 2
+#define POWERMEASURE_SAMPLE 3
 #define POWERMEASURE_READVALUES 10
 
 void powerMeasure(chanend control)
 {
-	unsigned cs_time ;
+	unsigned cs_time, cs_endtime ;
 	unsigned dataA, dataB ;
-	unsigned sampleCount ;
+	unsigned sampleCount, samplesLeft ;
+	unsigned printer[2];
 	char toDo ;
-	unsigned running ;
+	char running, sampling ;
 
 	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
 	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
-	unsigned prints[8] ;
-	double P_T, P_MT, P_MB, P_B, P_IO, P_DRAM, P_TOTAL ;
 
 	// initialise the ports
-	configPort8C() ;
-
 	configure_clock_rate(sclk_clk, 5, 1) ; // Max reliable value seems to be 5MHz
 	configure_out_port(cs_n, sclk_clk, 1) ;
 	configure_out_port(adc_address, sclk_clk, 2) ; // inital value 2
-
 	configure_in_port(din_a, sclk_clk) ;
 	configure_in_port(din_b, sclk_clk) ;
+
 	configure_port_clock_output(sclk, sclk_clk) ;
-	start_clock(sclk_clk) ;
 
 	running = 0 ; // not taking measurements
 	toDo = 0 ;
-	P_T= 0 ; P_MT = 0 ; P_MB = 0; P_B = 0 ; P_IO = 0 ; P_DRAM = 0 ; P_TOTAL = 0 ;
+	//P_T= 0 ; P_MT = 0 ; P_MB = 0; P_B = 0 ; P_IO = 0 ; P_DRAM = 0 ; P_TOTAL = 0 ;
 	sampleCount = 0 ;
+	samplesLeft = 0 ;
 
-	while (toDo != POWERMEASURE_START)
-	{
-		control :> toDo ;
-	}
-	// then go!
-	running = 1 ;
+	start_clock(sclk_clk) ;
 
 	while (1)
 	{
@@ -90,89 +81,180 @@ void powerMeasure(chanend control)
 		{
 			if (toDo == POWERMEASURE_START)
 			{
-				P_T= 0 ; P_MT = 0 ; P_MB = 0; P_B = 0 ; P_IO = 0 ; P_DRAM = 0 ; P_TOTAL = 0 ;
+				//printer[0] = 0xdeadbeef;
+				//printMany(1,printer);	
+				V_T= 0 ; V_MT = 0 ; V_MB = 0; V_B = 0 ; V_IO = 0 ; V_DRAM = 0 ;
+				I_T= 0 ; I_MT = 0 ; I_MB = 0; I_B = 0 ; I_IO = 0 ; I_DRAM = 0 ;
 				sampleCount = 0 ;
 				running = 1 ;
+				sampling = 0 ;
+			}
+			else if (toDo == POWERMEASURE_SAMPLE)
+			{
+
+				V_T= 0 ; V_MT = 0 ; V_MB = 0; V_B = 0 ; V_IO = 0 ; V_DRAM = 0 ;
+				I_T= 0 ; I_MT = 0 ; I_MB = 0; I_B = 0 ; I_IO = 0 ; I_DRAM = 0 ;
+				sampleCount = 0 ;
+				control :> samplesLeft ; // receive how many samples to take
+				running = 0 ;
+				sampling = 1 ;
 			}
 			else if (toDo == POWERMEASURE_STOP)
 			{
+			//	printer[0] = 0xbabeface;
+				//printMany(1,printer);	
 				running = 0 ;
-			}
-			else if (toDo == POWERMEASURE_READVALUES)
-			{
-				control <: sampleCount ;
-				control <: P_T ;
-				control <: P_MT ;
-				control <: P_MB ;
-				control <: P_B ;
-				control <: P_IO ;
-				control <: P_DRAM ;
-				control <: P_TOTAL ;
+				sampling = 0 ;
+				toDo = POWERMEASURE_READVALUES;
 			}
 			break ;
 		}
 
 
 		default:
-			if (running == 1)
+			if (running == 1 || sampling == 1)
 			{
-
-		//		printstrln("\nStart address scan") ;
 				for (unsigned address = 0 ; address < 6 ; address++)
 				{
 					adc_address <: address ;
+					cs_n <: 1 @ cs_time ; // generate timestamp
+					cs_time += 10 ;  // FIXME: For tQuiet. What's minimum? Should be one cycle
+					cs_endtime = cs_time + 16 ;
+					cs_n @ cs_time <: 0 ;
+/*
+					cs_n @ cs_endtime <: 1 ;
 					sync(cs_n) ;
-					cs_n <: 0 @ cs_time ;
-					clearbuf(din_a) ;
-					clearbuf(din_b) ;
-					cs_time += 32 ;
-					cs_n @ cs_time <: 1 ;
-
-					// hardware pins are swapped around, so invert in s/w
+					adr_clk <: 0 ;
 					din_a :> dataB ;
 					din_b :> dataA ;
+*/
 
-					//dataA = partin(din_a, 16) ;
-					//dataB = partin(din_b, 16) ;
-					//cs_n <: 1 ;
+					/* 1
+					din_a @ cs_endtime :> dataB ;
+					din_b :> dataA ;
+					cs_n  <: 1 ;
+					adr_clk <: 0 ;
+					*/
 
-					dataA = bitrev(dataA << 3) & 0xfff ;
-					dataB = bitrev(dataB << 3) & 0xfff ;
+					/* 2
+					cs_n  @ cs_endtime <: 1 ;
+					din_a @ cs_endtime :> dataB ;
+					din_b :> dataA ;
+					cs_n  <: 1 ;
+					adr_clk <: 0 ;
+					*/
+
+					/* 3
+					cs_n  @ cs_endtime <: 1 ;
+					adr_clk @ cs_endtime <: 0 ;
+					din_a @ cs_endtime :> dataB ;
+					din_b :> dataA ;
+					*/
+
+					/* 4
+					cs_n  @ cs_endtime <: 1 ;
+					adr_clk @ cs_endtime <: 0 ;
+					//din_a @ cs_endtime :> dataB ;
+					din_b @ cs_endtime :> dataA ;
+					*/
+
+					/* 5
+					cs_n  @ cs_endtime <: 1 ;
+					adr_clk @ cs_endtime <: 0 ;
+					din_a @ cs_endtime :> dataB ;
+					din_b @ cs_endtime :> dataA ;
+					*/
+
+					/* 6
+					cs_n  @ cs_endtime <: 1 ;
+					adr_clk @ cs_endtime <: 0 ;
+					din_a @ cs_endtime :> dataB ;
+					din_b @ (cs_endtime + 1) :> dataA ;
+					*/
+
+					/* 7
+					cs_n  @ cs_endtime <: 1 ;
+					sync(cs_n) ;
+					adr_clk <: 0 ;
+					din_a :> dataB ;
+					din_b :> dataA ;
+					*/
+
+					/* 8
+					cs_n  @ cs_endtime <: 1 ;
+
+					sync(cs_n) ;
+					adr_clk <: 0 ;
+					dataB = partin(din_a, 16) ;
+					dataA = partin(din_b, 16) ;
+					*/
+
+					/* 9
+					cs_n  @ cs_endtime <: 1 ;
+					adr_clk @ cs_endtime <: 0 ;
+					din_a @ cs_endtime :> dataB ;
+					din_b @ (cs_endtime + 2) :> dataA ;
+					*/
+
+					/* 10
+					cs_n  @ cs_endtime <: 1 ;
+					adr_clk @ cs_endtime <: 0 ;
+					din_a @ cs_endtime :> dataB ;
+					din_b  :> dataA ;
+					*/
+
+					/* 11 */
+					// hardware pins are not swapped around, so don't invert in s/w
+					// The timing sequence below is hand-crafted
+					// The system cannot deal with two timed data inputs within
+					// two cycles, so they have been offset to make use of the two
+					// leading '0's in the ADC data stream.
+					cs_n  @ cs_endtime <: 1 ;
+					din_a @ (cs_endtime - 2) :> dataA ;
+					din_b @ cs_endtime :> dataB ;
+
+					/*
+					printhexln(bitrev(dataA)) ;
+					printhexln(bitrev(dataB << 2)) ;
+					*/
 
 
+					// FIXME: Remove the AND operation on dataB for performance (seems the data is clean anyway)
+					dataA = bitrev(dataA) & 0xfff ;
+					dataB = bitrev(dataB << 2) & 0xfff ;
 
 
 					switch (address) {
 
 						case 0:
 							// These voltages doubled, since they're part of a voltage divider
-							V_IO = 2 * dataA ;
-							V_DRAM = 2 * dataB ;
+							V_IO += 2 * dataA ;
+							V_DRAM += 2 * dataB ;
 							break ;
 
 						case 1:
-							I_IO = dataA ;
-							I_DRAM = dataB ;
+							I_IO += dataA ;
+							I_DRAM += dataB ;
 							break ;
 
 						case 2:
-							V_T = dataA ;
-							V_B = dataB ;
+							V_T += dataA ;
+							V_B += dataB ;
 							break ;
 
 						case 3:
-							I_T = dataA ;
-							I_B = dataB ;
+							I_T += dataA ;
+							I_B += dataB ;
 							break ;
 
 						case 4:
-							V_MT = dataA ;
-							V_MB = dataB ;
+							V_MT += dataA ;
+							V_MB += dataB ;
 							break ;
 
 						case 5:
-							I_MT = dataA ;
-							I_MB = dataB ;
+							I_MT += dataA ;
+							I_MB += dataB ;
 							break ;
 
 						default:
@@ -180,44 +262,57 @@ void powerMeasure(chanend control)
 							break ;
 
 						}
-
-
-					// delay for t_quiet ; breaks everything!
-					cs_n <: 1 @ cs_time ;
-					cs_time += 10 ;
-					cs_n @ cs_time <: 1 ;
-
-
 				}
 
 				sampleCount++ ;
+				//if (sampling) samplesLeft-- ;
+		/*		if (samplesLeft == 0 && samplesLeft == 0){ 
+					toDo = POWERMEASURE_READVALUES ;
+					sampling =0;
+				}  */
 
-				P_T = (P_T +  (V_T * VSCALINGFACTOR) * (I_T * ISCALINGFACTOR)) ;
-				P_MT = (P_MT + (V_MT * VSCALINGFACTOR) * (I_MT * ISCALINGFACTOR)) ;
-				P_MB = (P_MB + (V_MB * VSCALINGFACTOR) * (I_MB * ISCALINGFACTOR)) ;
-				P_B = (P_B + (V_B * VSCALINGFACTOR) * (I_B * ISCALINGFACTOR)) ;
-				P_IO = (P_IO + (V_IO * VSCALINGFACTOR) * (I_IO * ISCALINGFACTOR))  ;
-				P_DRAM = (P_DRAM + (V_DRAM * VSCALINGFACTOR) * (I_DRAM * ISCALINGFACTOR) / 3.9) ; // It has a 0R39 R c.f. 0R1 for others
-				P_TOTAL = P_T + P_MT + P_MB + P_B + P_IO + P_DRAM ;
+			}
 
-				
+				if (toDo == POWERMEASURE_READVALUES)
+				{
+				//	printer[0] = 0xfadebeef;
+				//	printer[1] = sampleCount;
+				//printMany(2,printer);	
+					control <: sampleCount ;
+					control <: (V_T * VSCALINGFACTOR) >> 10 ;
+					control <: (I_T * VSCALINGFACTOR) >> 11 ;
+					control <: (V_MT * VSCALINGFACTOR) >> 10  ;
+					control <: (I_MT * VSCALINGFACTOR) >> 11 ;
+					control <: (V_MB * VSCALINGFACTOR) >> 10 ;
+					control <: (I_MB * VSCALINGFACTOR) >> 11 ;
+					control <: (V_B * VSCALINGFACTOR) >> 10  ;
+					control <: (I_B * VSCALINGFACTOR) >> 11 ;
+					control <: (V_IO * VSCALINGFACTOR) >> 10 ;
+					control <: (I_IO * VSCALINGFACTOR) >> 11 ;
+					control <: (V_DRAM * VSCALINGFACTOR) >> 10  ;
+					control <: (I_DRAM * VSCALINGFACTOR) >> 11 ;
+
+					toDo = POWERMEASURE_IDLE ;
+				}
 				break ;
-			} 
-			break;
+			}
+
 	}
 }
 
-}
-void powerMeasureServer(chanend control)
+
+void powerMeasureClient(chanend control)
 {
 	timer t ;
 	unsigned time ;
 	unsigned sampleCount ;
-	unsigned prints[8] ;
-	double P_T, P_MT, P_MB, P_B, P_DRAM, P_IO, P_TOTAL ;
+	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
+	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
+	unsigned P_T, P_MT, P_MB, P_B, P_DRAM, P_IO ;
 
-	for (int i = 0 ; i < 10 ; i++)
+	for (int i = 0 ; i < 1000 ; i++)
 	{
+	/*
 	// start measurement
 	control <: (char) POWERMEASURE_START ;
 
@@ -229,27 +324,60 @@ void powerMeasureServer(chanend control)
 	// now read the measurements
 	control <: (char) POWERMEASURE_STOP ;
 	control <: (char) POWERMEASURE_READVALUES ;
+	*/
+	control <: (char) POWERMEASURE_SAMPLE ;
+	control <: 1024 ; // no of samples. Max is 1677 Floor[ 2^32 / 2^12 / VSCALING_FACTOR ]
 
 	control :> sampleCount ;
-	control :> P_T ;
-	control :> P_MT ;
-	control :> P_MB ;
-	control :> P_B ;
-	control :> P_IO ;
-	control :> P_DRAM ;
-	control :> P_TOTAL ;
+	control :> V_T ;
+	control :> I_T ;
+	control :> V_MT ;
+	control :> I_MT ;
+	control :> V_MB ;
+	control :> I_MB ;
+	control :> V_B ;
+	control :> I_B ;
+	control :> V_IO ;
+	control :> I_IO ;
+	control :> V_DRAM ;
+	control :> I_DRAM ;
 
 
-	// print average power measurements in mW
-	prints[0] = P_T * 1000 / sampleCount ;
-	prints[1] = P_MT * 1000 / sampleCount ;
-	prints[2] = P_MB * 1000 / sampleCount ;
-	prints[3] = P_B * 1000 / sampleCount ;
-	prints[4] = P_IO * 1000 / sampleCount ;
-	prints[5] = P_DRAM * 1000 / sampleCount ;
-	prints[6] = sampleCount ;
-	//printMany(7, prints) ;
+	printstr("Samples taken:") ;
+	printuintln(sampleCount) ;
 
+
+	printstrln("Voltage measurements (mV)") ;
+	printuintln(V_T / sampleCount) ;
+	printuintln(V_MT / sampleCount) ;
+	printuintln(V_MB / sampleCount) ;
+	printuintln(V_B / sampleCount) ;
+	printuintln(V_IO / sampleCount) ;
+	printuintln(V_DRAM / sampleCount) ;
+
+	printstrln("Current measurements (mA)") ;
+	printuintln(I_T / sampleCount) ;
+	printuintln(I_MT / sampleCount) ;
+	printuintln(I_MB / sampleCount) ;
+	printuintln(I_B / sampleCount) ;
+	printuintln(I_IO / sampleCount) ;
+	printuintln(I_DRAM / sampleCount) ;
+
+
+	printstrln("Power measurements (mW)") ;
+
+	printstr("P_T = ") ;
+	printuintln((V_T / sampleCount) * (I_T / sampleCount) / 1000) ;
+	printstr("P_MT = ") ;
+	printuintln((V_MT / sampleCount) * (I_MT / sampleCount) / 1000) ;
+	printstr("P_MB = ") ;
+	printuintln((V_MB / sampleCount) * (I_MB / sampleCount) / 1000) ;
+	printstr("P_B = ") ;
+	printuintln((V_B / sampleCount) * (I_B / sampleCount) / 1000) ;
+	printstr("P_IO = ") ;
+	printuintln((V_IO / sampleCount) * (I_IO / sampleCount) / 1000) ;
+	printstr("P_DRAM = ") ;
+	printuintln((V_DRAM / sampleCount) * (I_DRAM / sampleCount) / 1000) ;
 	}
 }
 
@@ -280,13 +408,10 @@ void doWork(void)
 	}
 }
 
-void doIdle(void)
+void doIdle(unsigned divider, out port leds)
 {
-	//write_pswitch_reg(get_local_tile_id(), XCDIV_REGNUM, divider);  // 1 -> //Divide by 2 from main frequency
-	//setps(PS_XCORE_CTRL0_REGNUM,0x10);
-	//leds <: divider ;
+	write_pswitch_reg(get_local_tile_id(), XCDIV_REGNUM, divider);  // 1 -> Divide by 2 from main frequency
+	setps(PS_XCORE_CTRL0_REGNUM,0x10);
+	leds <: divider ;
 	asm("waiteu") ; // prevent from terminating, so that leds stay on
 }
-
-
-

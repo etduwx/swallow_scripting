@@ -21,12 +21,14 @@
 
 //Prim's algorithm parameters
 void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
-
+	unsigned sampleCount ;
+	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
+	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
+	unsigned P_T, P_MT, P_MB, P_B, P_DRAM, P_IO ;
 	unsigned foo, child_token,num_done;
 	channel myChannels[2*NUM_CHILDREN_PRIM];
 	unsigned printer[8];
 
-	double tempor;
 
 	//Chan in here
 	
@@ -103,17 +105,34 @@ void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
       //control_channel <: (char) POWERMEASURE_STOP;
       //control_channel <: (char) POWERMEASURE_READVALUES;
 
-//control_channel :> printer[0];
+      foo = 42;
 
-		 for (unsigned k = 1; k < 8; k++){
+      /*if(foo==42){
 
-//control_channel :> tempor;
+		control_channel :> sampleCount;
+		control_channel :> V_T ;
+		control_channel :> I_T ;
+		control_channel :> V_MT ;
+		control_channel :> I_MT ;
+		control_channel :> V_MB ;
+		control_channel :> I_MB ;
+		control_channel :> V_B ;
+		control_channel :> I_B ;
+		control_channel :> V_IO ;
+		control_channel :> I_IO ;
+		control_channel :> V_DRAM ;
+		control_channel :> I_DRAM ;
 
-		 printer[k] = (tempor*1000/(double) printer[0]) ;
+		printer[0] = sampleCount;
+		printer[1] = (V_T / sampleCount) * (I_T / sampleCount) / 1000;
+		printer[2] = (V_MT / sampleCount) * (I_MT / sampleCount) / 1000;
+		printer[3] = (V_MB / sampleCount) * (I_MB / sampleCount) / 1000;
+		printer[4] = (V_B / sampleCount) * (I_B / sampleCount) / 1000;
 
-		 }
+		printMany(8, printer);
+		
+	} */ //uncomment for power
 
-		 //printMany(8,printer); 
 
 }
 

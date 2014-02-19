@@ -1,0 +1,29 @@
+  .section .ctors, "aw", @progbits
+  .align 4
+  .int getAllChansFunc
+  .section .globcode, "ax", @progbits
+  .align 2
+getAllChansFunc:
+  entsp 1
+  stw   r4, sp[0]
+.LgetAllChannels:
+    getr    r0, 2
+    bt      r0, .LgetAllChannels
+    ldc     r2, 31
+    ldc     r3, 0
+    ldc     r1, 256
+    ldw     r0, cp[thisChanendZero]
+.LfreeAllChannels:
+    freer   res[r0]
+.LskipFree:
+    add     r0, r0, r1
+    eq      r4, r3, r2
+    add     r3, r3, 1
+    bf      r4, .LfreeAllChannels
+    ldw   r4, sp[0]
+    retsp 1
+    .section .cp.const4,"acM",@progbits,4
+    .align 4
+thisChanendZero:
+    .word   0x00000002
+    .text

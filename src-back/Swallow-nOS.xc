@@ -47,7 +47,7 @@ void enableAEC (unsigned standbyClockDivider)
 	// Modify the clock control bits
 	xcore_ctrl0_data = getps(XS1_PS_XCORE_CTRL0);
 	xcore_ctrl0_data &= 0xffffffff - XCORE_CTRL0_CLOCK_MASK;
-	xcore_ctrl0_data += XCORE_CTRL0_ENABLE_AEC;
+//	xcore_ctrl0_data += XCORE_CTRL0_ENABLE_AEC;
 	setps(XS1_PS_XCORE_CTRL0, xcore_ctrl0_data);
 }
 
@@ -215,7 +215,7 @@ void nOS_start(chanend c_in,chanend c_out, unsigned initialFreqDivider)
 
 
 	setFreqDivider(0,42) ;
-	//enableAEC(STANDBY_CLOCK_DIVIDER) ;
+	enableAEC(STANDBY_CLOCK_DIVIDER) ;
 
 
 

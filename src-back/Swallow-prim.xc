@@ -20,13 +20,15 @@
 
 
 //Prim's algorithm parameters
-void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel){
-
+void prim_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
+	unsigned sampleCount ;
+	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
+	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
+	unsigned P_T, P_MT, P_MB, P_B, P_DRAM, P_IO ;
 	unsigned foo, child_token,num_done;
 	channel myChannels[2*NUM_CHILDREN_PRIM];
 	unsigned printer[8];
 
-	double tempor;
 
 	c_in :> foo;
 	
@@ -34,10 +36,10 @@ void prim_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control
       num_done = 0;
 
      //Insert core_list Here
-core_list_prim[0] = 24;
-core_list_prim[1] = 25;
-core_list_prim[2] = 26;
-core_list_prim[3] = 27;
+core_list_prim[0] = 28;
+core_list_prim[1] = 29;
+core_list_prim[2] = 30;
+core_list_prim[3] = 31;
 
 
       for(unsigned i=0;i<2*NUM_CHILDREN_PRIM;i++){
@@ -91,7 +93,7 @@ client_createThread(0,100,i,core_list_prim[i]);
       }
 
 
-	c_out <: 42;
+      //Chan out here
 
 //      client_createThread(1,100,0,16);
 
@@ -107,17 +109,35 @@ client_createThread(0,100,i,core_list_prim[i]);
       //control_channel <: (char) POWERMEASURE_STOP;
       //control_channel <: (char) POWERMEASURE_READVALUES;
 
-//control_channel :> printer[0];
+      foo = 42;
 
-		 for (unsigned k = 1; k < 8; k++){
+      /*if(foo==42){
 
-//control_channel :> tempor;
+		control_channel :> sampleCount;
+		control_channel :> V_T ;
+		control_channel :> I_T ;
+		control_channel :> V_MT ;
+		control_channel :> I_MT ;
+		control_channel :> V_MB ;
+		control_channel :> I_MB ;
+		control_channel :> V_B ;
+		control_channel :> I_B ;
+		control_channel :> V_IO ;
+		control_channel :> I_IO ;
+		control_channel :> V_DRAM ;
+		control_channel :> I_DRAM ;
 
-		 printer[k] = (tempor*1000/(double) printer[0]) ;
+		printer[0] = sampleCount;
+		printer[1] = (V_T / sampleCount) * (I_T / sampleCount) / 1000;
+		printer[2] = (V_MT / sampleCount) * (I_MT / sampleCount) / 1000;
+		printer[3] = (V_MB / sampleCount) * (I_MB / sampleCount) / 1000;
+		printer[4] = (V_B / sampleCount) * (I_B / sampleCount) / 1000;
 
-		 }
+		printMany(8, printer);
+		
+	} */ //uncomment for power
 
-		 //printMany(8,printer); 
+
 
 }
 
@@ -831,10 +851,11 @@ t :> time_end;
    printer[4] = 0xbadbeef;
    printer[5] = sum2*counter2;
    printer[1] = printer[3] + printer[5];
-  //printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
+  printer[0] = 1000*(double)printer[5]/((double)printer[3]+(double) printer[5]);
   //printer[0] = printer[1];
 
   //Do print here
+//if(rank==0) printMany(1,printer);
 
    time_end += 100000000;
    channelSendWord(parentCommunicationChannel,4);

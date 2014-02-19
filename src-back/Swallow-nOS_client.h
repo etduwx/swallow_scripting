@@ -19,6 +19,8 @@ void p1(unsigned c) ;
 void child1(unsigned parentid);
 
 unsigned client_createThread(unsigned threadIdentifier, unsigned stackSize, unsigned childRank, unsigned tileIndex) ;
+unsigned client_createThreadDynamic(unsigned startAddress,unsigned childRank,unsigned depth, unsigned go_deeper,unsigned coreNo);
+unsigned client_createThreadRandom(unsigned startAddress, unsigned childRank,unsigned min,unsigned max);
 channel client_connectNewLocalChannel(unsigned channelIndex, endpoint destination) ;
 channel client_allocateNewLocalChannel(unsigned channelIndex) ;
 endpoint client_getLocalChannelDest(unsigned channelIndex) ;

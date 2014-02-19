@@ -36,8 +36,12 @@ static inline void printOne(unsigned value)
 	//printMany(1,data);
 
 }
-void sobel_main(chanend c_in, unsigned shouldIRun){
+void sobel_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 {
+	unsigned sampleCount ;
+	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
+	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
+	unsigned P_T, P_MT, P_MB, P_B, P_DRAM, P_IO ;
 	timer t;
 	unsigned time1,time2;
 
@@ -49,7 +53,7 @@ void sobel_main(chanend c_in, unsigned shouldIRun){
     unsigned ind1x,ind2x,ind1y,ind2y;
     unsigned childStart, childStack;
     unsigned num_collected;
-    double tempor;
+  
     const unsigned subIMG_WIDTH_SOBEL = IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL + 4;
     const unsigned subIMG_LENGTH_SOBEL = IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL + 4;
     //channel input_channel;
@@ -65,10 +69,18 @@ void sobel_main(chanend c_in, unsigned shouldIRun){
 
 
 //Insert core_list Here
-core_list_sobel[0] = 24;
-core_list_sobel[1] = 25;
-core_list_sobel[2] = 26;
-core_list_sobel[3] = 27;
+core_list_sobel[0] = 23;
+core_list_sobel[1] = 24;
+core_list_sobel[2] = 25;
+core_list_sobel[3] = 26;
+core_list_sobel[4] = 20;
+core_list_sobel[5] = 21;
+core_list_sobel[6] = 22;
+core_list_sobel[7] = 27;
+core_list_sobel[8] = 28;
+core_list_sobel[9] = 29;
+core_list_sobel[10] = 30;
+core_list_sobel[11] = 31;
 
     myID = get_logical_core_id();
 
@@ -97,7 +109,8 @@ core_list_sobel[3] = 27;
     for(unsigned i = 0; i <NUM_CHILDREN_SOBEL; i++){
     	myChannels[i] = client_allocateNewLocalChannel(i); // push into operating system
     	//start children threads
-client_createThread(1,100,i,core_list_sobel[i]);
+//client_createThread(0,100,i,core_list_sobel[i]);
+client_createThreadRandom(0,i,15,26);
 //	printintln(i);
     	channelListen(myChannels[i]) ;
 	//printstrln("");
@@ -191,16 +204,33 @@ t :> time2;
 	//control_channel <: (char) POWERMEASURE_STOP;
 		//control_channel <: (char) POWERMEASURE_READVALUES;
 	
-		//control_channel :> printer[0];
+	foo = 42;
 
-		for(unsigned k =1; k < 8; k++){
-			//control_channel :> tempor;
+/*if(foo==42){
 
-			printer[k] = (tempor*1000/(double) printer[0]) ;
-		}
-		//printMany(8, printer);
+		control_channel :> sampleCount;
+		control_channel :> V_T ;
+		control_channel :> I_T ;
+		control_channel :> V_MT ;
+		control_channel :> I_MT ;
+		control_channel :> V_MB ;
+		control_channel :> I_MB ;
+		control_channel :> V_B ;
+		control_channel :> I_B ;
+		control_channel :> V_IO ;
+		control_channel :> I_IO ;
+		control_channel :> V_DRAM ;
+		control_channel :> I_DRAM ;
 
+		printer[0] = sampleCount;
+		printer[1] = (V_T / sampleCount) * (I_T / sampleCount) / 1000;
+		printer[2] = (V_MT / sampleCount) * (I_MT / sampleCount) / 1000;
+		printer[3] = (V_MB / sampleCount) * (I_MB / sampleCount) / 1000;
+		printer[4] = (V_B / sampleCount) * (I_B / sampleCount) / 1000;
 
+		printMany(8, printer);
+		
+	} */ //uncomment for power
 
 
     /* while(num_collected<NUM_CHILDREN_SOBEL)
@@ -232,6 +262,10 @@ t :> time2;
        } 
 
     //release channels
+
+
+printer[0] = 0xbabebabe;
+printMany(1,printer);
 
 /*
   for(int i=0;i<IMG_WIDTH_SOBEL+2;i++)
@@ -393,11 +427,11 @@ Comptime += time2-time1;
 
 t :> time_end;
 
-printer[0] = Comptime + Commtime;
-//printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
+//printer[0] = Comptime + Commtime;
+printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
 
 //Do print here
-if(rank==3) printMany(1,printer);
+//if(rank==1) printMany(1,printer);
 
 
 

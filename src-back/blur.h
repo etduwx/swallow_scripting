@@ -13,14 +13,14 @@ void xc_printPower(chanend powerChannel);
 #ifdef MCMAIN
 #define chanend unsigned
 #endif
-void blur_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel);
+void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel);
 #ifdef chanend
 #undef chanend
 #endif
 #else
 #define chanend unsigned
 void xc_printPower(unsigned powerChannel);
-void blur_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel);
+void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel);
 #endif
 void blur_child(unsigned parent_id, unsigned rank) ;
 #endif /* MATRIXMUL_H_ */

@@ -38,6 +38,10 @@ static inline void printOne(unsigned value)
 }
 void sobel_main(chanend c_in,unsigned shouldIRun,chanend control_channel)
 {
+	unsigned sampleCount ;
+	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
+	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
+	unsigned P_T, P_MT, P_MB, P_B, P_DRAM, P_IO ;
 	timer t;
 	unsigned time1,time2;
 
@@ -49,7 +53,7 @@ void sobel_main(chanend c_in,unsigned shouldIRun,chanend control_channel)
     unsigned ind1x,ind2x,ind1y,ind2y;
     unsigned childStart, childStack;
     unsigned num_collected;
-    double tempor;
+  
     const unsigned subIMG_WIDTH_SOBEL = IMG_WIDTH_SOBEL/DIV_DEGREE_X_SOBEL + 4;
     const unsigned subIMG_LENGTH_SOBEL = IMG_LENGTH_SOBEL/DIV_DEGREE_Y_SOBEL + 4;
     //channel input_channel;
@@ -186,16 +190,33 @@ t :> time2;
 	//control_channel <: (char) POWERMEASURE_STOP;
 		//control_channel <: (char) POWERMEASURE_READVALUES;
 	
-		//control_channel :> printer[0];
+	foo = 42;
 
-		for(unsigned k =1; k < 8; k++){
-			//control_channel :> tempor;
+/*if(foo==42){
 
-			printer[k] = (tempor*1000/(double) printer[0]) ;
-		}
-		//printMany(8, printer);
+		control_channel :> sampleCount;
+		control_channel :> V_T ;
+		control_channel :> I_T ;
+		control_channel :> V_MT ;
+		control_channel :> I_MT ;
+		control_channel :> V_MB ;
+		control_channel :> I_MB ;
+		control_channel :> V_B ;
+		control_channel :> I_B ;
+		control_channel :> V_IO ;
+		control_channel :> I_IO ;
+		control_channel :> V_DRAM ;
+		control_channel :> I_DRAM ;
 
+		printer[0] = sampleCount;
+		printer[1] = (V_T / sampleCount) * (I_T / sampleCount) / 1000;
+		printer[2] = (V_MT / sampleCount) * (I_MT / sampleCount) / 1000;
+		printer[3] = (V_MB / sampleCount) * (I_MB / sampleCount) / 1000;
+		printer[4] = (V_B / sampleCount) * (I_B / sampleCount) / 1000;
 
+		printMany(8, printer);
+		
+	} */ //uncomment for power
 
 
     /* while(num_collected<NUM_CHILDREN_SOBEL)

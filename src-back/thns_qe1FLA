@@ -1,0 +1,12 @@
+    .globl _write.coersed..f.7bsi.7d.28si.2c.26.28a.28.3ac.3auc.29.29.2cui.29,"f{si}(si,&(a(:c:uc)),ui)"
+    .type _write.coersed..f.7bsi.7d.28si.2c.26.28a.28.3ac.3auc.29.29.2cui.29, @function
+    .extern _write,"f{si}(si,p(c:uc),ui)"
+    .linkset _write.coersed..f.7bsi.7d.28si.2c.26.28a.28.3ac.3auc.29.29.2cui.29, _write
+    .globl _write.coersed..f.7bsi.7d.28si.2c.26.28a.28.3ac.3auc.29.29.2cui.29.nstackwords
+    .linkset _write.coersed..f.7bsi.7d.28si.2c.26.28a.28.3ac.3auc.29.29.2cui.29.nstackwords, _write.nstackwords
+    .globl nOS_start.coersed..f.7b0.7d.28ui.2cui.2cui.29,"f{0}(ui,ui,ui)"
+    .type nOS_start.coersed..f.7b0.7d.28ui.2cui.2cui.29, @function
+    .extern nOS_start,"f{0}(chd,chd,ui)"
+    .linkset nOS_start.coersed..f.7b0.7d.28ui.2cui.2cui.29, nOS_start
+    .globl nOS_start.coersed..f.7b0.7d.28ui.2cui.2cui.29.nstackwords
+    .linkset nOS_start.coersed..f.7b0.7d.28ui.2cui.2cui.29.nstackwords, nOS_start.nstackwords
