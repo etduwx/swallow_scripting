@@ -143,7 +143,7 @@ if(searchDeeper == 0){
 			break;
 		}
 		else
-			return neighbouringActivity[smallest] & 0xff;
+			return neighbouringActivity[smallest];
 	}
 
 }
