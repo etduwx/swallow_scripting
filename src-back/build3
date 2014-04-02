@@ -1,2 +1,0 @@
-#! /bin/bash
-swallow-mcsc.py mcmain.xc blur.xc Power_Measure_Lib.xc Swallow-sobel.xc Swallow-wait.xc Swallow-helpers.xc Swallow-nOS_asm.s Swallow-nOS_client.xc Swallow-nOS_initialFunctions.c Swallow-nOS.xc Swallow-prim.xc Swallow-prim-checks.c  -O3 -o binary.sgb

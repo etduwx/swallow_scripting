@@ -1,2 +1,0 @@
-
-void printPower(unsigned powerChannel);

@@ -1,3 +1,0 @@
-#! /bin/bash
-cp Swallow-sobel_flat.h Swallow-sobel.h
-swallow-mcsc.py mcmain2.xc Swallow-helpers.xc Swallow-nOS_asm.s Swallow-nOS_client.xc Swallow-nOS_initialFunctionsa.c Swallow-nOS.xc Swallow-sobel-select.c Swallow-sobel.xc -O3 -o sobel_flat.sgb
