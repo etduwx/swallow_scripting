@@ -1,20 +1,24 @@
 #!/usr/bin/python -u
 import os, subprocess, signal, shutil
+import random
 from time import sleep
 from tempfile import mkstemp
 
 outputfile = "results.csv"
 outputreadfile = "print_output.txt"
 
-PARENTCORE_PRIM = 19
-PARENTCORE_SOBEL = 21
-PARENTCORE_BLUR = 20
+PARENTCORE_PRIM = 25
+PARENTCORE_SOBEL = 20
+PARENTCORE_BLUR = 31
 PARENTCORE_MERGESORT = 1
 PARENTCORE_ID = 1
 
 NUMCORES_INIT = 36
 INITIALFUNCTIONS_PATH_BASE = "Swallow-nOS_initialFunctions_base.c"
 INITIALFUNCTIONS_PATH = "Swallow-nOS_initialFunctions.c"
+
+NOS_CLIENT_PATH_BASE = "Swallow-nOS_client_base.xc"
+NOS_CLIENT_PATH = "Swallow-nOS_client.xc"
 
 PRIMS_BODY_BASE_PATH = "Swallow-prim_base.xc"
 PRIMS_HEADER_BASE_PATH = "Swallow-prim_base.h"
@@ -40,6 +44,7 @@ BUILDFILE = "build"
 POWERCORE = 17
 MAXCORES = 32
 SYNCCORE = 0 # So far, this can only be 0
+SINKCORE = 31
 
 def editFile(x):
 
@@ -157,7 +162,7 @@ def editPrimBody(coreList, typeOfEditing, threadNum,appList):
     os.remove(PRIMS_CHECK_PATH)
     shutil.move(abs_path,PRIMS_CHECK_PATH)
 
-def editSobelBody(coreList, typeOfEditing, threadNum,appList):
+def editSobelBody(coreList, typeOfEditing, threadNum,appList,mode,mini,maxi):
     global SOBEL_BODY_PATH
     global SOBEL_BODY_BASE_PATH
 
@@ -195,7 +200,12 @@ def editSobelBody(coreList, typeOfEditing, threadNum,appList):
                 line = "core_list_sobel[" + str(i) + "] = " + str(coreList[i]) + ";\n"
                 newFile.write(line)
         elif create_match in line:
-            newFile.write("client_createThread(" + str(appList.index("sobel")) + ",100,i,core_list_sobel[i]);\n")
+            if mode == "dynamic":
+                newFile.write("client_createThreadDynamic(" + str(appList.index("sobel")) + ",i,0,1,0);\n")
+            elif mode == "random":
+                newFile.write("client_createThreadRandom(" + str(appList.index("sobel")) + ",i," + str(mini) + "," + str(maxi) + ");\n")
+            else:
+                newFile.write("client_createThread(" + str(appList.index("sobel")) + ",100,i,core_list_sobel[i]);\n")
         elif print_thread_match in line:
             newFile.write(line)
             if(typeOfEditing=='time' or typeOfEditing=='ratio'):
@@ -210,7 +220,7 @@ def editSobelBody(coreList, typeOfEditing, threadNum,appList):
     os.remove(SOBEL_BODY_PATH)
     shutil.move(abs_path,SOBEL_BODY_PATH)
 
-def editBlurBody(coreList,typeOfEditing,threadNum,appList):
+def editBlurBody(coreList,typeOfEditing,threadNum,appList,mode,mini,maxi):
     global BLUR_BODY_PATH
     global BLUR_BODY_BASE_PATH
 
@@ -242,10 +252,21 @@ def editBlurBody(coreList,typeOfEditing,threadNum,appList):
             if appList.index("blur") < len(appList) - 1:
                 newFile.write("\tc_out <: 42;\n")
         elif match_main in line:
-            line =   "client_createThread(" + str(appList.index("blur")) + ", 100, 0," + str(coreList[0]) + ");\n"
+            if mode == "dynamic":
+                line =    "client_createThreadDynamic(" + str(appList.index("blur")) + ",0,0,1,0);\n"
+            elif mode == "random":
+                line =  "client_createThreadRandom(" + str(appList.index("blur")) + ",0," + str(mini) + "," + str(maxi) + ");\n"
+            else:
+                line =   "client_createThread(" + str(appList.index("blur")) + ", 100, 0," + str(coreList[0]) + ");\n"
             newFile.write(line)
         elif create_match in line:
-            newFile.write("client_createThread(" + str(appList.index("blur")) +", 100, rank + 1, nextCore);\n")
+            if mode == "dynamic":
+                line =    "client_createThreadDynamic(" + str(appList.index("blur")) + ",rank + 1,0,1,0);\n"
+            elif mode == "random":
+                line =  "client_createThreadRandom(" + str(appList.index("blur")) + ",rank + 1," + str(mini) + "," + str(maxi) + ");\n"
+            else:
+                line = "client_createThread(" + str(appList.index("blur")) +", 100, rank + 1, nextCore);\n"
+            newFile.write(line)
         elif match_coreList in line:
             newFile.write(line)
             newFile.write("switch(rank){\n")
@@ -513,7 +534,7 @@ def print_to_csv(appList,coreList,parents,values):
     f.close()        
 
 # Need to add power or not power functionality
-def editMCMain_initialFunctions(appList,parentCores):
+def editMCMain_initialFunctions(appList,parentCores,numDoWorks):
     global MCMAIN_BASE_PATH
     global MCMAIN_PATH
     global INITIALFUNCTIONS_PATH_BASE
@@ -540,9 +561,9 @@ def editMCMain_initialFunctions(appList,parentCores):
             newFile.write(def_cores_match +"(" + str(MAXCORES) + ")\n")
         elif channel_match in line:
             newFile.write(line)
-            if len(appList) > 1:
-                if len(appList) > 2:
-                    newFile.write("\tchan p[" + str(len(appList) - 1) + "];\n")
+            if len(appList) - numDoWorks > 1:
+                if len(appList) - numDoWorks > 2:
+                    newFile.write("\tchan p[" + str(len(appList) - numDoWorks- 1) + "];\n")
                 else:
                     newFile.write("\tchan p;\n")
             while(cur_line < MAXCORES):
@@ -576,31 +597,35 @@ def editMCMain_initialFunctions(appList,parentCores):
                     
                     while(z < len(sortedcores)):
                         if sortedcores[z] == cur_line:
-                            if parentCores.index(sortedcores[z]) == 0:
-                                if len(appList) > 1:
-                                    if len(appList) == 2:
-                                        newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],p,1,k) ; \n')
-                                    else:
-                                        newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],p[0],1,k) ; \n')
-                                else:
-                                    newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],1,k) ; \n')
-                            elif parentCores.index(sortedcores[z]) < len(appList) - 1:
-                                newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p[' + str(parentCores.index(sortedcores[z])-1) + '],p[' + str(parentCores.index(sortedcores[z])) + '],1) ; \n')
+                            if appList[parentCores.index(sortedcores[z])] == "doWork":
+                                newFile.write('\ton stdcore[i] : doWork() ; \n')
                             else:
-                                if len(appList) == 2:
-                                    newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p,1) ; \n')
+                                if parentCores.index(sortedcores[z]) == 0:
+                                    if len(appList) - numDoWorks > 1:
+                                        if len(appList) - numDoWorks == 2:
+                                            newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],p,1,k) ; \n')
+                                        else:
+                                            newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],p[0],1,k) ; \n')
+                                    else:
+                                        newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(c[NCORES],1,k) ; \n')
+                                elif parentCores.index(sortedcores[z]) < len(appList) - numDoWorks - 1:
+                                    newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p[' + str(parentCores.index(sortedcores[z])-1) + '],p[' + str(parentCores.index(sortedcores[z])) + '],1) ; \n')
                                 else:
-                                    newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p[' + str(parentCores.index(sortedcores[z])-1) + '],1) ; \n')
+                                    if len(appList) - numDoWorks == 2:
+                                        newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p,1) ; \n')
+                                    else:
+                                        newFile.write('\ton stdcore[i] : ' + str(appList[parentCores.index(sortedcores[z])]) + '_main(p[' + str(parentCores.index(sortedcores[z])-1) + '],1) ; \n')
                             parentCores[parentCores.index(sortedcores[z])] = 99
                             z += 1
                         else:
                              break
-                    cur_line = next_line            
+                    cur_line = next_line    
                     newFile.write("}")        
 
                 else:
                     newFile.write("\tpar (int i = " + str(cur_line) + "; i < " + str(MAXCORES) + " ; i += 1) {\n")
                     newFile.write("\ton stdcore[i] : nOS_start(c[i],c[i+1],0) ;\n")
+                   
                     newFile.write("}")
                     cur_line = MAXCORES
 
@@ -624,10 +649,10 @@ def editMCMain_initialFunctions(appList,parentCores):
 
     for line in baseFile:
         if num_starts_match in line:
-            newFile.write(num_starts_match + str(len(appList)) + '\n')
+            newFile.write(num_starts_match + str(len(appList)-numDoWorks) + '\n')
         elif initials_match in line:
             newFile.write(line)
-            for y in xrange(len(appList)):
+            for y in xrange(len(appList)-numDoWorks):
                 newFile.write("\tstarts[" + str(y) +"] = " + str(appList[y]) + "_child; \n")
         else:
             newFile.write(line)
@@ -645,17 +670,17 @@ def addPrim(coreList, measurementType, threadNum, appList):
     editPrimHeader(coreList,appList)
     editPrimBody(coreList, measurementType, threadNum,appList) # power=1,ratio=2,time=3
 
-def addBlur(coreList,measurementType,threadNum, appList):
+def addBlur(coreList,measurementType,threadNum, appList,mode,mini,maxi):
 
     #editMCMain("blur",measurePower)
     editBlurHeader(coreList,appList)
-    editBlurBody(coreList,measurementType,threadNum,appList)
+    editBlurBody(coreList,measurementType,threadNum,appList,mode,mini,maxi)
 
-def addSobel(coreList,measurementType,threadNum, appList):
+def addSobel(coreList,measurementType,threadNum, appList,mode,mini,maxi):
 
     #editMCMain("blur",measurePower)
     editSobelHeader(coreList,appList)
-    editSobelBody(coreList,measurementType,threadNum,appList)
+    editSobelBody(coreList,measurementType,threadNum,appList,mode,mini,maxi)
 
 
 def edit_buildfile(appList):
@@ -688,6 +713,38 @@ def edit_buildfile(appList):
     os.remove(BUILDFILE)
     shutil.move(abs_path,BUILDFILE)
     os.system("chmod a+x ./build")
+
+def edit_client(doWorkArray):
+    global NOS_CLIENT_PATH
+    global NOS_CLIENT_PATH_BASE
+
+    fh, abs_path = mkstemp()
+    newFile = open(abs_path,'w')
+    editFile = open(NOS_CLIENT_PATH_BASE)
+    lookfor = "Insert Offsets"
+
+    for line in editFile:
+        if lookfor in line:
+            for x in xrange(32):
+                amt = 1
+                if x == SYNCCORE:
+                    amt += 1
+                if x == POWERCORE:
+                    amt += 1
+                if x == PARENTCORE_BLUR:
+                    amt += 1
+                if x == PARENTCORE_SOBEL:
+                    amt += 1 
+                newFile.write("\toffsets[" + str(x) + "] = " + str(amt + doWorkArray[x]) + "; \n")
+
+        newFile.write(line)
+
+    os.close(fh)
+    newFile.close()
+    editFile.close()
+
+    os.remove(NOS_CLIENT_PATH)
+    shutil.move(abs_path,NOS_CLIENT_PATH)
 
 def runExperiments(appList,coreNums):
 
@@ -738,19 +795,19 @@ def runExperiments(appList,coreNums):
     #if lastInd >=3:
     #    lim3 = upperBound - cores[2] + 1
    # else:
-    lim3 = 1
+    lim3 = 10 #num samples
 
    # if lastInd >=2:
    #     lim2 = upperBound - cores[1] + 1
    # else:
-    lim2 = 1
+    lim2 = 1 # 0 = dynamic 1 = random
 
    # if lastInd >=1 and primflag == 0:
    #     lim1 = upperBound - cores[0] + 1
    # else:
-    lim1 = 1
+    lim1 = [36,24,12,0]
 
-    for i in xrange(lim1):
+    for i in lim1:
         indices[0] = i
         for j in xrange(lim2):
             indices[1] = j
@@ -766,13 +823,13 @@ def runExperiments(appList,coreNums):
                     apps.append("prim")
                     parentcores.append(PARENTCORE_PRIM)
                 if any("blur" in s for s in appList):
-                    coreList.append([23,24,25,26])
+                    coreList.append([23,24,25,26,27,28,29,30])
                     #coreList.append(range(8+MAXCORES-16+indices[appinds[0]],8+MAXCORES-16+indices[appinds[0]]+coreNums[appList.index("blur")]))
                     apps.append("blur")
                     parentcores.append(PARENTCORE_BLUR)
                 if any("sobel" in s for s in appList):
                     #coreList.append(range(8+MAXCORES-16+indices[appinds[1]],8+MAXCORES-16+indices[appinds[1]]+coreNums[appList.index("sobel")]))
-                    coreList.append([23,24,25,26,20,21,22,27,28,29,30,31])
+                    coreList.append([23,24,25,26,27,28,29,30])
                     apps.append("sobel")
                     parentcores.append(PARENTCORE_SOBEL)
                 if any("mergesort" in s for s in appList):
@@ -789,11 +846,46 @@ def runExperiments(appList,coreNums):
 
                 par = []
 
-                for i in parentcores:
-                    par.append(i)
+                for hi in parentcores:
+                    par.append(hi)
+
+                temp_apps = [];
+                for h in xrange(len(apps)):
+                    temp_apps.append(apps[h])
+
+                w = 0
+
+                mode = "random"
+             
+                mini = 20
+                maxi = 31
+
+                if any("doWork" in s for s in appList):   
+                   
+                    b = [0]*32
+
+                    doWorkLoc = []
+
+                    print i
+
+                    for v in xrange(i) :
+                        choose = 1
+                        while(choose):
+                            tile = random.randrange(mini,maxi,1)
+                            if b[tile] < 4:
+                                b[tile] = b[tile] + 1
+                                choose = 0
+                                doWorkLoc.append(tile)
+                  
+                    w = len(doWorkLoc)
+
+                    for o in xrange(w):
+                        temp_apps.append("doWork")
+                        par.append(doWorkLoc[o])
 
                 edit_buildfile(apps)
-                editMCMain_initialFunctions(apps,par)
+                editMCMain_initialFunctions(temp_apps,par,w)
+                edit_client(b)
 
                 for coreAppIndex in xrange(len(apps)):
                     timeSum = 0
@@ -837,15 +929,15 @@ def runExperiments(appList,coreNums):
                         if any("prim" in s for s in appList):
                             addPrim(coreList[0],states[0],threadNum,apps)
                         if any("blur" in s for s in appList):
-                            addBlur(coreList[appinds[0]],states[appinds[0]],threadNum,apps)
+                            addBlur(coreList[appinds[0]],states[appinds[0]],threadNum,apps,mode,mini,maxi)
                         if any("sobel" in s for s in appList):
-                            addSobel(coreList[appinds[1]],states[appinds[1]],threadNum,apps)
+                            addSobel(coreList[appinds[1]],states[appinds[1]],threadNum,apps,mode,mini,maxi)
                         if any("mergesort" in s for s in appList):
-                            addMergeSort(coreList[appinds[2]],states[appinds[2]],threadNum,apps)
+                            addMergeSort(coreList[appinds[2]],states[appinds[2]],threadNum,apps,"dynamic",0,0)
 
                         print("Now compiling and running " + str(apps) + " on cores" + str(abc) +", getting " + states[coreAppIndex] + " from " + str(apps[coreAppIndex]) + " on thread of rank " + str(threadNum) + "... \n")
-
-
+                        if(w>0):
+                            print("doWork() has been added to cores " + str(doWorkLoc) + "... \n")
                         compileandRun()
                         parseOutput(states[coreAppIndex],threadNum,coreAppIndex)
                         i += 1
@@ -916,9 +1008,10 @@ def main():
     applications = []
 
     #applications.append("prim")
+    applications.append("doWork")
     applications.append("sobel")
-   # applications.append("blur")
-    numCores = [12]
+    applications.append("blur")
+    numCores = [8,8,8]
 
     mode = "append+"
 

@@ -1,0 +1,42 @@
+#! /bin/bash
+
+# how many lines to look back for labels
+CONTEXT_SIZE=500
+
+# JTAG to Node ID map for a 1 wide x 3 deep config (e.g. at CMU)
+declare -A NODES1WX3D
+NODES1WX3D=([2]=1 [3]=0 [4]=3 [5]=2 [0]=5 [1]=4 [6]=7 [7]=6
+[46]=9 [47]=8 [8]=11 [9]=10 [44]=13 [45]=12 [10]=15 [11]=14
+[42]=17 [43]=16 [12]=19 [13]=18 [40]=21 [41]=20 [14]=23 [15]=22 
+[38]=25 [39]=24 [16]=27 [17]=26 [36]=29 [37]=28 [18]=31 [19]=30
+[34]=33 [35]=32 [20]=35 [21]=34 [32]=37 [33]=36 [22]=39 [23]=38
+[30]=41 [31]=40 [24]=43 [25]=42 [28]=45 [29]=44 [26]=47 [27]=46)
+
+# JTAG to Node ID map for a 2 wide x 3 deep config (e.g. at Bristol)
+# (only first 32 nodes declared)
+declare -A NODES2WX3D
+NODES2WX3D=([2]=1 [3]=0 [4]=3 [5]=2 [10]=5 [11]=4 [12]=7 [13]=6
+[0]=9 [1]=8 [6]=11 [7]=10 [8]=13 [9]=12 [14]=15 [15]=14
+[94]=17 [95]=16 [24]=19 [25]=18 [22]=21 [23]=20 [16]=23 [17]=22 [92]=25 [93]=24 [26]=27 [27]=26 [20]=29 [21]=28 [18]=31 [19]=30)
+
+# Choose which node map to use for this version of the script by changing name
+# in the two lines that use the NODES... array below
+
+rm xgdb.out
+rm xgdb.out2
+rm debug.out
+rm context.out
+xgdb -x xgdb.script > /dev/null
+cut -d ' ' -f4- xgdb.out | sed 's/^ *//g' | cut -d ' ' -f 1,2,4 | sed 's/tile//g' | sed 's/core//g' | tr -d [] | sort -g > xgdb.out2
+
+while IFS=' ' read -r field1 field2 field3
+do
+#echo "Translating $field1 to ${NODES[$field1]}"
+#INSTRUCTION=`./xd1 ${NODES[$field1]} $field3 | sed 's/^ *//g' `
+#INSTRUCTION=`xobjdump -d scmain_"${NODES[$field1]}".xe | grep $field3`
+CONTEXT=`xobjdump -d scmain_"${NODES1WX3D[$field1]}".xe | grep -B$CONTEXT_SIZE $field3 | cat > context.out`
+INSTRUCTION=`tail -n1 context.out | sed 's/^ *//g'`
+LABEL=`cat context.out | egrep  "[a-zA-Z0-9_-]*>:" | tail -n1`
+echo "Tile ${NODES1WX3D[$field1]} Core $field2  Scope $LABEL  pc= $INSTRUCTION" | cat >> debug.out
+done < xgdb.out2
+sort -g -k2 debug.out

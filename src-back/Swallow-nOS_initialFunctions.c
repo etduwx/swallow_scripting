@@ -8,13 +8,14 @@
 //#include "matrixmul.h"
 #include "Swallow-sobel.h"
 
-#define NUMBEROFSTARTS 1
+#define NUMBEROFSTARTS 2
 
 // OBSOLETE WITH NEW client_createThread
 unsigned getStartAddress(unsigned index)
 {
 	void (*starts[NUMBEROFSTARTS])(unsigned,unsigned) ; // void (void) function pointer
-	starts[0] = sobel_child; 
+	starts[0] = blur_child; 
+	starts[1] = sobel_child; 
 	
 	
 	return (unsigned) starts[index] ;

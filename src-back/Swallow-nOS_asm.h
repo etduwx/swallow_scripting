@@ -11,9 +11,9 @@
 #define nOS_LISTENCHANNEL 31
 #define MAXLOCALTHREADS 5   // max number of nonOS threads supported
 #define MAXTHREADCHANNELS 24 // max number of channels/thread supported
-#define THREADSTACKSIZE 2048// number of words for each thread stack
+#define THREADSTACKSIZE 1900 // number of words for each thread stack
 
-enum nOS_action {nOS_allocateNewChannel_action, nOS_connectNewChannel_action, nOS_getChannelDest_action, nOS_updateChannelDest_action, nOS_releaseChannel_action, nOS_lookupChanend_action, nOS_createThread_action, nOS_getThreadStatus_action } ;
+enum nOS_action {nOS_allocateNewChannel_action, nOS_connectNewChannel_action, nOS_getChannelDest_action, nOS_updateChannelDest_action, nOS_releaseChannel_action, nOS_lookupChanend_action, nOS_createThread_action, nOS_getThreadStatus_action, nOS_getCommsStats_action, nOS_getNoUserThreads_action } ;
 typedef struct chanMapping {unsigned chanID; } chanMapping ;
 
 unsigned nOS_createThread(unsigned parentID, unsigned startAddress, unsigned childRank, unsigned stacks[MAXLOCALTHREADS][THREADSTACKSIZE]) ;
@@ -33,6 +33,9 @@ unsigned GetLock() ;
 void ClaimLock(unsigned l) ;
 void FreeLock(unsigned l) ;
 void FreerLock(unsigned l) ;
+unsigned nOS_getThreadStatus(unsigned noeid, unsigned threadindex) ;
+unsigned nOS_getThreadStatuses(unsigned nodeid) ;
+unsigned nOS_getCommsStats(unsigned nodeid) ;
 
 #else
 void nOS_listenForAction(unsigned c, unsigned stacks[MAXLOCALTHREADS][THREADSTACKSIZE], chanMapping chanMap[MAXLOCALTHREADS][MAXTHREADCHANNELS]) ;
@@ -45,8 +48,16 @@ unsigned GetLock() ;
 void ClaimLock(unsigned l) ;
 void FreeLock(unsigned l) ;
 void FreerLock(unsigned l) ;
+unsigned nOS_getThreadStatus(unsigned nodeid, unsigned threadindex) ;
+unsigned nOS_getThreadStatuses(unsigned nodeid) ;
+unsigned nOS_getCommsStats(unsigned nodeid) ;
 
+#endif
 
+#ifndef COMMS_STATS_H
+// global data array for comms stats tracking. Length is variable
+#define COMMS_STATS_H
+extern unsigned COMMS_STATS[32] ;
 #endif
 
 #endif /* SWALLOW_NOS_ASM_H_ */

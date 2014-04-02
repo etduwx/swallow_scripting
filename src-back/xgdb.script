@@ -1,0 +1,6 @@
+connect --noreset --id 1
+set logging file xgdb.out
+set logging redirect on
+set logging on
+info threads
+quit

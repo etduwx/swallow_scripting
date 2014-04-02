@@ -23,9 +23,9 @@
 #ifdef MCMAIN
 #define chanend unsigned
 #endif
-void startSync(chanend c_out);
-void sinkSync(chanend c, unsigned shouldIrun);
+void sinkSync(chanend c);
 void nOS_start(chanend c_in,chanend c_out, unsigned initialFreqDivider) ;
+void startSync(chanend c1);
 #ifdef chanend
 #undef chanend
 #endif
@@ -45,7 +45,8 @@ void select1B(chanend c1, chanend c2) ;
 void begin1(unsigned parentID, unsigned rank) ;
 void begin2(unsigned parentID, unsigned rank) ;
 void begin3(unsigned parentID, unsigned rank) ;
-void startSync(unsigned c_out);
+void startSync(unsigned c1);
+void sinkSync(unsigned c1);
 void select1B(unsigned c1, unsigned c2) ;
 #endif
 

@@ -13,7 +13,7 @@
 #include "Power_Measure_Lib.h"
 #define LOCALnOSCHANEND 0x1f02
 
-void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
+void blur_main(chanend c_in, chanend c_out, unsigned shouldIRun, chanend control_channel){
 	unsigned sampleCount ;
 	unsigned V_T, V_MT, V_MB, V_B, V_IO, V_DRAM ;
 	unsigned I_T, I_MT, I_MB, I_B, I_IO, I_DRAM ;
@@ -29,19 +29,21 @@ void blur_main(chanend c_in, unsigned shouldIRun, chanend control_channel){
 	unsigned x = 0;
 	unsigned i = 0;
 	unsigned j = 0;
+	double tempor;
 	channel doneSignal;
 	unsigned coreList[24];
 
 	c_in :> foo;
+	c_out <: 42;
 
 	parentch = client_allocateNewLocalChannel(0) ;
 	doneSignal = client_allocateNewLocalChannel(1) ;
 	
-client_createThread(0, 100, 0,23);
+client_createThreadRandom(0,0,20,31);
 
 	channelListen(parentch);
 	t :> time1;
-	//control_channel <: (char) POWERMEASURE_START;
+	control_channel <: (char) POWERMEASURE_START;
 	
 		for(i = 0; i < IMG_WIDTH_BLUR; i++){
 			for(j = 0; j < IMG_LENGTH_BLUR; j++){
@@ -73,36 +75,24 @@ client_createThread(0, 100, 0,23);
 	//if(foo==42) printMany(1,printer);
 	
 	
-		//control_channel <: (char) POWERMEASURE_STOP;
-		//control_channel <: (char) POWERMEASURE_READVALUES;
+		control_channel <: (char) POWERMEASURE_STOP;
+		control_channel <: (char) POWERMEASURE_READVALUES;
 	
-/* if(foo==42){
+if(foo==42){
 
-		control_channel :> sampleCount;
-		control_channel :> V_T ;
-		control_channel :> I_T ;
-		control_channel :> V_MT ;
-		control_channel :> I_MT ;
-		control_channel :> V_MB ;
-		control_channel :> I_MB ;
-		control_channel :> V_B ;
-		control_channel :> I_B ;
-		control_channel :> V_IO ;
-		control_channel :> I_IO ;
-		control_channel :> V_DRAM ;
-		control_channel :> I_DRAM ;
+	control_channel :> printer[0];
 
-		printer[0] = sampleCount;
-		printer[1] = (V_T / sampleCount) * (I_T / sampleCount) / 1000;
-		printer[2] = (V_MT / sampleCount) * (I_MT / sampleCount) / 1000;
-		printer[3] = (V_MB / sampleCount) * (I_MB / sampleCount) / 1000;
-		printer[4] = (V_B / sampleCount) * (I_B / sampleCount) / 1000;
+    for (unsigned k = 1; k < 8; k++){
 
-		printMany(8, printer);
+		control_channel :> tempor;
+
+        printer[k] = (tempor*1000/(double) printer[0]) ;
+
+    }
+
+	printMany(8, printer);
 		
-	}*/  //uncomment for power
-
-	printMany(1,printer);	
+}
 
 }
 
@@ -146,10 +136,18 @@ case 1: nextCore = 25;
 break; 
 case 2: nextCore = 26;
 break; 
+case 3: nextCore = 27;
+break; 
+case 4: nextCore = 28;
+break; 
+case 5: nextCore = 29;
+break; 
+case 6: nextCore = 30;
+break; 
 }
 
 		childch = client_allocateNewLocalChannel(rank+1);
-client_createThread(0, 100, rank + 1, nextCore);
+client_createThreadRandom(0,rank + 1,20,31);
 
         	channelListen(childch);
 		if(rank!=0) doneSignal = channelReceiveWord(parentCommunicationChannel);
@@ -288,10 +286,9 @@ channelSendWord(rootCommunicationChannel,42);
 	}
 	
 
-	printer[0] = Comptime;
+	//printer[0] = 1000*((double)Comptime/(double)(Comptime + Commtime));
 	//printer[0] = Comptime + Commtime;
 
 	//Insert Printing Here
-if(rank==0) printMany(1,printer);
 
 }

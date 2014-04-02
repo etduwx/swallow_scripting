@@ -386,7 +386,7 @@ nOS_threadFree:
 .globl nOS_getThreadStatus.maxchanends
 
 .linkset nOS_getThreadStatus.nstackwords, 0
-.linkset nOS_getThreadStatus.maxchanends, 0
+.linkset nOS_getThreadStatus.maxchanends, 1
 .linkset nOS_getThreadStatus.maxtimers, 0
 .linkset nOS_getThreadStatus.maxthreads, 0
 
@@ -395,49 +395,158 @@ nOS_threadFree:
 .text
 
 # get running thread status
-# takes no arguments
-# returns with PS_DBG_RUN_CTRL in r0
-# and a bitmap of waiting threads in r1 ('1' = WAITING)
-
+# takes Node ID to be checked in r0 {0x0000, NodeID}
+# thread index to be checked in r1 (0--7)
+# returns SR of the requested thread
 nOS_getThreadStatus:
+	entsp 0
+	# sanity check input (range 0--7)
+	shr r2, r1, 0x3
+	ecallt r2
 
-#  CURRENTLY DOESN'T WORK
+	# create configuration resource identifier
+	# is {NodeID, <0xC2 (PSCTRL) or 0xC3  (SSCTRL)>, 0x0c}
+	shl r0, r0, 16
+	ldc r2, 0xc20c
+	or r0, r0, r2
+	# get a chanend to send on
+	getr r3, 0x02
+	# if no chanend available will be spotted setd exception behaviour
+	# set destination as PSSwitch on destination
+	setd res[r3], r0
+	# send READC control token
+	ldc r2, 0xc1
+	outct res[r3], r2
+	# send return address
+	shr r2, r3, 24
+	outt res[r3], r2
+	shr r2, r3, 16
+	outt res[r3], r2
+	shr r2, r3, 8
+	outt res[r3], r2
 
-# get the PS_DBG_RUN_CTRL register
-# "Determine which threads are active in when not in debug mode."
-#	ldc r0, 0x180b
-#	get r0, ps[r0]
+	# send requested register (two sets of 16 bits)
+	ldc r2, 0x0
+	outt res[r3], r2
+	# base address of the PC copies
+	#ldc r2, 0x40
+	# base address of the SR copies
+	ldc r2, 0x60
 
-# now, go through all threads and determine if they are in the 'WAITING' state
-#	ldc r1, 0x0
-	# r2 tracks thread ID to be inspected
-#	ldc r2, 0x8
+	# select the wanted thread
+	add r2, r2, r1
+	outt res[r3], r2
 
-	# switch to DEBUG mode (thread 0 had better be running this code)
-#	dcall 
-getThreadStatusLoop:
-#	sub r2, r2, 0x1
+	# done for send
+	outct res[r3], 0x01
 
-#	ldc r3, dtid
-#	set ps[r3], r2
-#	ldc r3, dtreg
-#	ldc r11, sr
-#	set ps[r3], r11
+	# now wait for response
+	chkct res[r3], 0x3
+	in r0, res[r3]
+	chkct res[r3], 0x1
+	# and free the chanend that was used
+	freer res[r3]
 
-# extract the 'WAITING' bit (into r11 implicitly but add explicitly)
-#	dgetreg r11
-#	ldc r3, 0x40
-#	and r11, r11, r3
-#	shr r11, r11, 0x6
-#	shl r11, r11, r2
-#	or r1, r1, r11
-#	bt r2, getThreadStatusLoop
+	retsp 0
 
-	# return from debug mode
-#	dret
-
-#	retsp 0
 .cc_bottom nOS_getThreadStatus.func
+
+#----------------------
+
+
+.globl nOS_getThreadStatuses.nstackwords
+.globl nOS_getThreadStatuses.maxthreads
+.globl nOS_getThreadStatuses.maxtimers
+.globl nOS_getThreadStatuses.maxchanends
+
+.linkset nOS_getThreadStatuses.nstackwords, 0
+.linkset nOS_getThreadStatuses.maxchanends, 1
+.linkset nOS_getThreadStatuses.maxtimers, 0
+.linkset nOS_getThreadStatuses.maxthreads, 0
+
+.globl nOS_getThreadStatuses
+.cc_top nOS_getThreadStatuses.func, nOS_getThreadStatuses
+.text
+
+# get running thread status
+# takes Node ID to be checked in r0 {0x0000, NodeID}
+# returns a bitmap of waiting threads in r0 ('1' = WAITING)
+
+nOS_getThreadStatuses:
+	entsp 0
+
+	# create configuration resource identifier
+	# is {NodeID, <0xC2 (PSCTRL) or 0xC3  (SSCTRL)>, 0x0c}
+	shl r0, r0, 16
+	ldc r2, 0xc20c
+	or r0, r0, r2
+	# get a chanend to send on
+	getr r3, 0x02
+	# set destination as PSSwitch on destination
+	setd res[r3], r0
+
+	# clear result
+	ldc r0, 0x0
+	# reset thread counter
+	ldc r1, 0x8
+nOS_getThreadStatusesLoop:
+	# loop maintainance
+	sub r1, r1, 0x1
+	# move along the result accumulator
+	shl r0, r0, 1
+	# send READC control token
+	ldc r2, 0xc1
+	outct res[r3], r2
+	# send return address
+	shr r2, r3, 24
+	outt res[r3], r2
+	shr r2, r3, 16
+	outt res[r3], r2
+	shr r2, r3, 8
+	outt res[r3], r2
+
+	# send requested register (two sets of 16 bits)
+	ldc r2, 0x0
+	outt res[r3], r2
+	# base address of the SR copies
+	ldc r2, 0x60
+
+	# select the wanted thread
+	add r2, r2, r1
+	outt res[r3], r2
+
+	# done for send
+	outct res[r3], 0x01
+
+	# now wait for response
+	chkct res[r3], 0x3
+	in r2, res[r3]
+	chkct res[r3], 0x1
+
+	# mask off 'WAITING' bit
+	# clear all bits to the left of the wanted
+	shl r2, r2, 24
+	shl r2, r2, 1
+
+	# and to the right
+	shr r2, r2, 24
+	shr r2, r2, 7
+
+	# or into result
+	or r0, r0, r2
+
+	# loop
+	bt r1, nOS_getThreadStatusesLoop
+
+	# and free the chanend that was used
+	freer res[r3]
+
+	retsp 0
+
+.cc_bottom nOS_getThreadStatuses.func
+
+
+#------------------
 
 
 #------------------
@@ -573,6 +682,37 @@ nOS_setChannelDest:
 	retsp 0
 
 .cc_bottom nOS_setChannelDest.func
+
+
+#--------------------------------
+
+.globl nOS_getCommsStats.nstackwords
+.globl nOS_getCommsStats.maxthreads
+.globl nOS_getCommsStats.maxtimers
+.globl nOS_getCommsStats.maxchanends
+
+.linkset nOS_getCommsStats.nstackwords, 0
+.linkset nOS_getCommsStats.maxchanends, 0
+.linkset nOS_getCommsStats.maxtimers, 0
+.linkset nOS_getCommsStats.maxthreads, 0
+
+.globl nOS_getCommsStats
+.cc_top nOS_getCommsStats.func, nOS_getCommsStats
+.text
+
+# grab a global stats variable and return.
+# If this goes wrong it's a) The addressing is incorrect;
+# b) Due the need to lock the shared access.
+nOS_getCommsStats:
+	entsp 0
+	# grab the address of the global array
+	ldaw r11, dp[COMMS_STATS]
+	# add in the offset supplied as an argument and load
+	ldw r0, r11[r0]
+	retsp 0
+
+.cc_bottom nOS_getCommsStats.func
+
 
 
 #---------------------

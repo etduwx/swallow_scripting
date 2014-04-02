@@ -44,7 +44,7 @@ void sobel_main(chanend c_in,unsigned shouldIRun,chanend control_channel)
 	unsigned P_T, P_MT, P_MB, P_B, P_DRAM, P_IO ;
 	timer t;
 	unsigned time1,time2;
-
+	double tempor;
 	unsigned myID;
   //  unsigned IMG[IMG_WIDTH_SOBEL][IMG_LENGTH_SOBEL];
    //  unsigned processed_image[IMG_WIDTH_SOBEL+2][IMG_LENGTH_SOBEL+2];
@@ -194,29 +194,20 @@ t :> time2;
 
 /*if(foo==42){
 
-		control_channel :> sampleCount;
-		control_channel :> V_T ;
-		control_channel :> I_T ;
-		control_channel :> V_MT ;
-		control_channel :> I_MT ;
-		control_channel :> V_MB ;
-		control_channel :> I_MB ;
-		control_channel :> V_B ;
-		control_channel :> I_B ;
-		control_channel :> V_IO ;
-		control_channel :> I_IO ;
-		control_channel :> V_DRAM ;
-		control_channel :> I_DRAM ;
-
-		printer[0] = sampleCount;
-		printer[1] = (V_T / sampleCount) * (I_T / sampleCount) / 1000;
-		printer[2] = (V_MT / sampleCount) * (I_MT / sampleCount) / 1000;
-		printer[3] = (V_MB / sampleCount) * (I_MB / sampleCount) / 1000;
-		printer[4] = (V_B / sampleCount) * (I_B / sampleCount) / 1000;
-
-		printMany(8, printer);
 		
-	} */ //uncomment for power
+	control_channel :> printer[0];
+
+    for (unsigned k = 1; k < 8; k++){
+
+		control_channel :> tempor;
+
+        printer[k] = (tempor*1000/(double) printer[0]) ;
+
+    }
+
+	printMany(8, printer);
+		
+} */ //uncomment for power
 
 
     /* while(num_collected<NUM_CHILDREN_SOBEL)

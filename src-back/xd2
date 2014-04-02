@@ -1,0 +1,3 @@
+#! /bin/bash
+#paste <(ls scmain*.xe) <(ls scmain*.xe | xargs -I {} --max-arg 1 bash -c "xobjdump -d {} | grep $1 || echo -e \"\t\t\tnot found in file\"") 
+paste <(ls scmain*.xe) <(ls scmain*.xe | xargs -I {} --max-arg 1 bash -c "xobjdump -d {} | grep $1 || echo -e \"\t\t\tnot found in file\"") | sort -g -k2 -t_

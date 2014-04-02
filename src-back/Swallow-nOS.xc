@@ -28,6 +28,7 @@ out port even_leds = XS1_PORT_4F;
 
 unsigned noUserThreads = 0 ;
 unsigned noUserThreadsLock = 0 ;
+unsigned COMMS_STATS[32] ;
 
 void startSync(chanend c_out)
 {
@@ -35,7 +36,16 @@ void startSync(chanend c_out)
 
 	foo = 42;
 	c_out <: foo;
-}
+} 
+
+void sinkSync(chanend c_in)
+{
+	unsigned foo;
+
+	
+	c_in :> foo;
+} 
+
 
 void enableAEC (unsigned standbyClockDivider)
 {
@@ -47,7 +57,7 @@ void enableAEC (unsigned standbyClockDivider)
 	// Modify the clock control bits
 	xcore_ctrl0_data = getps(XS1_PS_XCORE_CTRL0);
 	xcore_ctrl0_data &= 0xffffffff - XCORE_CTRL0_CLOCK_MASK;
-//	xcore_ctrl0_data += XCORE_CTRL0_ENABLE_AEC;
+	xcore_ctrl0_data += XCORE_CTRL0_ENABLE_AEC;
 	setps(XS1_PS_XCORE_CTRL0, xcore_ctrl0_data);
 }
 
@@ -160,13 +170,31 @@ unsigned nOS_doAction(unsigned action, unsigned arg1, unsigned arg2, unsigned ar
 		result = nOS_createThread(arg1, arg2, arg3, stacks) ;
 		return result ;
 
-	// lookup how many threads are currently tasked to this core
-	// and their status
+
+	// Lookup how many threads are currently tasked to this core
 	// < takes no args >
-	// returns { 00000000, 8-bit flags - running or blocked, no threads (16 bits)
+	// returns number of nOS-created user threads (excluding nOS and anything in the main par{} 
+	case nOS_getNoUserThreads_action :
+		return  noUserThreads ; // lock should not be needed since nOS is only writer
+
+
+	// lookup status of threads currently tasked to this core
+	// takes Node ID to be checked in format: {0x0000, NodeID}
+	// returns {24'b0, 8-bit flags - running or blocked}
 	case nOS_getThreadStatus_action :
-		return noUserThreads ;
+		return nOS_getThreadStatuses(arg1)  ;
+
+
+
+	// return user-collected communications stats
+	// takes array offset in global array called COMMS_STATS[]
+	// returns the value of that array element
+	case nOS_getCommsStats_action :
+		result = nOS_getCommsStats(arg1) ;
+		return result ;
 	}
+
+
 }
 
 // global stacks variable
@@ -214,7 +242,7 @@ void nOS_start(chanend c_in,chanend c_out, unsigned initialFreqDivider)
 //	printhexln(stackSize) ; */
 
 
-	setFreqDivider(0,42) ;
+	setFreqDivider(initialFreqDivider,42) ;
 	enableAEC(STANDBY_CLOCK_DIVIDER) ;
 
 
@@ -391,21 +419,6 @@ void chanTestChild(unsigned parentID, unsigned rank)
 	printstrln("chanTestChild sending word.") ;
 	channelSendWord(myChanB, 42) ;
 	printstrln("chanTestChild done.") ;
-}
-
-void sinkSync(chanend c, unsigned shouldIrun)
-{
-	unsigned foo ;
-	unsigned dest ;
-	
-//	unsigned res = 0x202 ;
-//	unsigned dest = 0x102 ;
-//	asm("setd res[%0], %1" : "=r"(res) : "r"(dest) ) ;
-	if (!shouldIrun) return;
-	c :> foo ;
-	//unsigned myc = getNewChannel();
-	//dest = channelListen(myc) ;
-
 }
 
 void printID(unsigned tile)

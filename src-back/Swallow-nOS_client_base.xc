@@ -33,38 +33,6 @@ unsigned client_createThreadDynamic(unsigned startAddress,unsigned childRank,uns
 
 	unsigned offsets[32];
 
-	offsets[0] = 2; 
-	offsets[1] = 1; 
-	offsets[2] = 1; 
-	offsets[3] = 1; 
-	offsets[4] = 1; 
-	offsets[5] = 1; 
-	offsets[6] = 1; 
-	offsets[7] = 1; 
-	offsets[8] = 1; 
-	offsets[9] = 1; 
-	offsets[10] = 1; 
-	offsets[11] = 1; 
-	offsets[12] = 1; 
-	offsets[13] = 1; 
-	offsets[14] = 1; 
-	offsets[15] = 1; 
-	offsets[16] = 1; 
-	offsets[17] = 2; 
-	offsets[18] = 1; 
-	offsets[19] = 1; 
-	offsets[20] = 5; 
-	offsets[21] = 5; 
-	offsets[22] = 5; 
-	offsets[23] = 5; 
-	offsets[24] = 4; 
-	offsets[25] = 3; 
-	offsets[26] = 4; 
-	offsets[27] = 5; 
-	offsets[28] = 3; 
-	offsets[29] = 4; 
-	offsets[30] = 5; 
-	offsets[31] = 2; 
 	//Insert Offsets Here (Automatically generated 32 lines by the script which depend on the initial configuration of the system.
 
 	//Determination of column and row of current core, if current depth of search is the first level
@@ -321,45 +289,13 @@ unsigned client_createThreadRandom(unsigned startAddress, unsigned childRank,uns
 	unsigned myThread = get_logical_core_id() ;  // returns 0--7
 	unsigned myID = (myCore << 16) | myThread ;   // a unique ID for this thread
 	unsigned range = max-min;
-	unsigned printer[2];
+	//unsigned printer[2];
 	unsigned targetCore;
 	unsigned doRand = 1;
 	//printer[0] = childRank;
 
 	unsigned offsets[32];
 
-	offsets[0] = 2; 
-	offsets[1] = 1; 
-	offsets[2] = 1; 
-	offsets[3] = 1; 
-	offsets[4] = 1; 
-	offsets[5] = 1; 
-	offsets[6] = 1; 
-	offsets[7] = 1; 
-	offsets[8] = 1; 
-	offsets[9] = 1; 
-	offsets[10] = 1; 
-	offsets[11] = 1; 
-	offsets[12] = 1; 
-	offsets[13] = 1; 
-	offsets[14] = 1; 
-	offsets[15] = 1; 
-	offsets[16] = 1; 
-	offsets[17] = 2; 
-	offsets[18] = 1; 
-	offsets[19] = 1; 
-	offsets[20] = 5; 
-	offsets[21] = 5; 
-	offsets[22] = 5; 
-	offsets[23] = 5; 
-	offsets[24] = 4; 
-	offsets[25] = 3; 
-	offsets[26] = 4; 
-	offsets[27] = 5; 
-	offsets[28] = 3; 
-	offsets[29] = 4; 
-	offsets[30] = 5; 
-	offsets[31] = 2; 
 	//Insert Offsets Here
 
 
@@ -369,11 +305,10 @@ unsigned client_createThreadRandom(unsigned startAddress, unsigned childRank,uns
 	// tile by invoking the standard nOS createThread interface
 	while(doRand){
 		targetCore = min + (rand() % range);
-		if(client_getNoUserThreads(targetCore) + offsets[targetCore] < THRESHOLD) doRand = 0;
+		if(client_getNoUserThreads(targetCore) + offsets[targetCore] <= THRESHOLD) doRand = 0;
 
 	}
-	printer[0] = childRank;
-	printer[1] = targetCore;
+	//printer[1] = targetCore;
 	//printMany(2,printer);
 
 	return nOS_requestAction((nodeIndexToId(targetCore) | LOCALnOSCHANEND), nOS_createThread_action, myID, startAddress, childRank) ;

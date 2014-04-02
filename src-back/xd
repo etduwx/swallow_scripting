@@ -1,0 +1,3 @@
+#! /bin/bash
+
+xobjdump -d scmain_$1.xe | grep -b16 -a16 $2

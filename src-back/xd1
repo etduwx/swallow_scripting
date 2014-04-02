@@ -1,0 +1,4 @@
+#! /bin/bash
+
+xobjdump -d scmain_$1.xe | grep $2
+
